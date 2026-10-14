@@ -94,7 +94,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 // ----------------------------------------------------
 app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any> => {
   try {
-    const { messages } = req.body;
+    const { messages, whatsappNumber, hasActiveVipPack, catalogue } = req.body;
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Historique de messages requis.' });
     }
@@ -108,22 +108,27 @@ app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any
       try {
         const { GoogleGenAI } = await import('@google/genai');
         const ai = new GoogleGenAI();
-        const systemPrompt = `Tu es l'Assistant Commercial d'élite de VISION BOOKS (https://vision-books.vercel.app), la bibliothèque audio exclusive pour entrepreneurs, investisseurs et visionnaires ambitieux.
+        const safeCatalogue = Array.isArray(catalogue) ? catalogue.slice(0, 40) : [];
+        const systemPrompt = `Tu es le conseiller commercial de VISION BOOKS. Réponds en français, avec élégance, clarté et sans pression artificielle.
 
-Tes objectifs :
-1. Répondre avec élégance, clarté et un ton haut de gamme et professionnel en français.
-2. Conseiller des livres audio du catalogue VISION BOOKS en fonction des besoins de l'utilisateur (Business & Entrepreneuriat, Finance & Investissement, Mindset & Leadership, Productivité).
-3. Mentionner le Pack VIP Élite (qui regroupe l'ensemble des masterclasses avec accès à vie et bonus stratégiques).
-4. Encourager poliment la commande directe sur WhatsApp avec assistance personnalisée.
-5. Inviter l'utilisateur à télécharger nos guides stratégiques offerts (Lead Magnets).
+RÈGLES IMPÉRATIVES :
+- Recommande uniquement des titres, auteurs et prix présents dans le catalogue fourni. N'invente jamais de livre, de tarif, de stock, de témoignage, de résultat ou de statistique.
+- Utilise les besoins exprimés par le visiteur pour recommander au maximum 2 titres réellement présents, avec leurs liens internes /produit/SLUG si un slug est fourni.
+- Présente le Pack VIP uniquement si le contexte indique qu'il est actif.
+- Si le numéro WhatsApp n'est pas configuré, ne fabrique aucun numéro et invite à consulter la fiche produit ou le catalogue.
+- Mentionne les guides gratuits uniquement si le visiteur pose la question ou si cela aide réellement sa demande.
+- Ne promets jamais de résultats financiers garantis. Ne révèle aucun lien audio privé, aucune donnée de prospect et aucune information d'administration.
 
-Message du visiteur : "${lastMessage}"`;
+Catalogue public disponible : ${JSON.stringify(safeCatalogue)}
+Pack VIP actif : ${hasActiveVipPack === true ? 'oui' : 'non'}.
+WhatsApp configuré : ${typeof whatsappNumber === 'string' && whatsappNumber.replace(/\\D/g, '').length >= 8 ? 'oui' : 'non'}.`;
 
         const response = await ai.models.generateContent({
           model: 'gemini-3.8-flash',
-          contents: systemPrompt,
+          contents: String(lastMessage),
           config: {
-            temperature: 0.7,
+            systemInstruction: systemPrompt,
+            temperature: 0.5,
             maxOutputTokens: 600,
           },
         });
@@ -145,8 +150,8 @@ Pour accélérer vos résultats, je vous invite à consulter notre catalogue com
 
     return res.json({
       message: reply,
-      whatsappNumber: '+33612345678',
-      hasActiveVipPack: true,
+      whatsappNumber: typeof whatsappNumber === 'string' ? whatsappNumber : '',
+      hasActiveVipPack: hasActiveVipPack === true,
     });
   } catch (error: any) {
     console.error('Error in /api/assistant/chat:', error);
@@ -213,7 +218,7 @@ Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
     if (!resultJson) {
       resultJson = {
         short_description: `Une masterclass audio indispensable de ${cleanAuthor} pour maîtriser les leviers stratégiques et concrétiser vos ambitions professionnelles.`,
-        full_description: `Découvrez les modèles mentaux et les principes fondamentaux qui ont permis aux plus grands leaders de transformer leur vision en réalité pérenne.\n\nDans cet ouvrage audio immersif, ${cleanAuthor} décortique avec méthode les mécanismes indispensables pour surmonter les obstacles opérationnels et bâtir des résultats durables.\n\nChaque chapitre est articulé autour d'exemples concrets, directement applicables dans votre quotidien stratégique.`,
+        full_description: `Découvrez des modèles mentaux et des principes utiles pour réfléchir aux décisions professionnelles de transformer leur vision en réalité pérenne.\n\nDans cet ouvrage audio immersif, ${cleanAuthor} décortique avec méthode les mécanismes indispensables pour surmonter les obstacles opérationnels et bâtir des résultats durables.\n\nChaque chapitre est articulé autour d'exemples concrets, directement applicables dans votre quotidien stratégique.`,
         key_points: [
           `Les modèles de décision infaillibles adoptés par les leaders mondiaux`,
           `Comment éliminer les frictions d'exécution et décupler votre impact`,
@@ -285,7 +290,7 @@ Réponds STRICTEMENT sous forme de JSON valide :
       resultJson = {
         title: `Guide Stratégique Exécutif : Les Fondements du Succès dans ${cleanTopic}`,
         slug: `guide-${cleanTopic.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-        description: `Un condensé tactique pensé pour les décideurs souhaitant gagner du temps et éliminer les erreurs coûteuses. Découvrez les protocoles testés et approuvés par nos experts partenaires.`,
+        description: `Un condensé tactique pensé pour les décideurs souhaitant gagner du temps et éliminer les erreurs coûteuses. Découvrez des principes à examiner et à adapter à votre situation.`,
         benefits: [
           `Une feuille de route limpide à déployer sous 7 jours`,
           `Les 3 pièges critiques à désamorcer d'urgence`,
@@ -319,10 +324,10 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
 
     // Standard high-converting recommended product for sequence conclusion
     const recommendedProduct = {
-      title: "L'Empire du Business Moderne",
-      author: "Marc de Saint-Clair",
-      slug: "l-empire-du-business-moderne",
-      price: "29.90 € (au lieu de 49.90 €)",
+      title: "un livre audio adapté à votre objectif",
+      author: "VISION BOOKS",
+      slug: "",
+      price: "au tarif affiché sur la fiche du livre",
     };
 
     let sequence = {
