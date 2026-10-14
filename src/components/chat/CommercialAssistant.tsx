@@ -135,9 +135,7 @@ export const CommercialAssistant: React.FC = () => {
         id: `err-${Date.now()}`,
         role: 'assistant',
         content:
-          "Je vous prie de m'excuser, notre service de conseil IA est momentanément ralenti. Vous pouvez échanger directement avec notre équipe humaine sur WhatsApp au " +
-          (normalizeBusinessWhatsApp(settings.whatsapp_number) || 'aucun numéro WhatsApp configuré pour le moment') +
-          " pour recevoir des conseils personnalisés ou un extrait offert !",
+          "Je vous prie de m'excuser, notre service de conseil IA est momentanément indisponible. Vous pouvez utiliser le bouton WhatsApp du site si le contact est configuré, ou parcourir les fiches du catalogue pour trouver un livre adapté à votre objectif.",
         timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackErrorMessage]);
