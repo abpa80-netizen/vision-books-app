@@ -123,6 +123,12 @@ export const AudioPreviewModal: React.FC = () => {
           </div>
         </div>
 
+        {!audioSrc && (
+          <p className="mt-4 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 text-xs leading-relaxed text-neutral-300">
+            Aucun extrait audio n’a encore été ajouté pour ce titre. Vous pouvez consulter sa fiche et découvrir son contenu avant de commander.
+          </p>
+        )}
+
         {/* Dynamic Waveform Display */}
         <div className="mt-6 flex h-14 items-center justify-between gap-1 rounded-xl bg-neutral-900/80 px-4 py-2">
           {[20, 45, 70, 95, 60, 40, 80, 100, 75, 50, 85, 60, 40, 90, 100, 70, 45, 60, 80, 50, 65, 90, 80, 45, 60, 85, 95, 65, 40, 60, 30].map(
