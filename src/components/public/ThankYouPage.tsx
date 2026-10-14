@@ -14,7 +14,8 @@ import { useApp } from '../../context/AppContext';
 import { trackLeadMagnetDownload } from '../../services/analytics';
 
 export const ThankYouPage: React.FC = () => {
-  const { navigateTo } = useApp();
+  const { navigateTo, settings } = useApp();
+  const whatsappPhone = (settings?.whatsapp_number || '').replace(/[^0-9]/g, '');
 
   const [leadInfo, setLeadInfo] = useState<{
     firstName?: string;
@@ -178,17 +179,19 @@ export const ThankYouPage: React.FC = () => {
           </div>
 
           {/* WhatsApp Direct Option */}
-          <div className="mt-6 text-center">
-            <a
-              href="https://wa.me/?text=Bonjour%20VISION%20BOOKS,%20je%20viens%20de%20t%C3%A9l%C3%A9charger%20votre%20guide%20gratuit%20!"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              <span>Échanger avec un conseiller sur WhatsApp</span>
-            </a>
-          </div>
+          {whatsappPhone.length >= 8 && (
+            <div className="mt-6 text-center">
+              <a
+                href={'https://wa.me/' + whatsappPhone + '?text=Bonjour%20VISION%20BOOKS%2C%20je%20viens%20de%20t%C3%A9l%C3%A9charger%20votre%20guide%20gratuit%20!'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Échanger avec un conseiller sur WhatsApp</span>
+              </a>
+            </div>
+          )}
 
           {/* Trust Footnote */}
           <div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-neutral-500">
