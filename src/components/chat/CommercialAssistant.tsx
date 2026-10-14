@@ -16,6 +16,7 @@ import {
 import { api } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import { SafeImage } from '../common/SafeImage';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 interface ChatMessage {
   id: string;
@@ -114,7 +115,7 @@ export const CommercialAssistant: React.FC = () => {
         }));
 
       const response = await api.chatWithAssistant(apiPayload, {
-        whatsappNumber: settings.whatsapp_number || '',
+        whatsappNumber: normalizeBusinessWhatsApp(settings.whatsapp_number),
         hasActiveVipPack: Boolean(vipPack && (vipPack as any).is_active !== false && (vipPack as any).active !== false),
         catalogue: safeCatalogue,
       });
@@ -135,7 +136,7 @@ export const CommercialAssistant: React.FC = () => {
         role: 'assistant',
         content:
           "Je vous prie de m'excuser, notre service de conseil IA est momentanément ralenti. Vous pouvez échanger directement avec notre équipe humaine sur WhatsApp au " +
-          (settings.whatsapp_number || 'aucun numéro WhatsApp configuré pour le moment') +
+          (normalizeBusinessWhatsApp(settings.whatsapp_number) || 'aucun numéro WhatsApp configuré pour le moment') +
           " pour recevoir des conseils personnalisés ou un extrait offert !",
         timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       };
@@ -150,8 +151,7 @@ export const CommercialAssistant: React.FC = () => {
     setInputMessage('');
   };
 
-  const whatsappNumber = settings.whatsapp_number || '';
-  const cleanPhone = whatsappNumber.replace(/\D/g, '');
+  const cleanPhone = normalizeBusinessWhatsApp(settings.whatsapp_number);
 
   const openWhatsAppGeneral = () => {
     if (cleanPhone.length < 8) {
