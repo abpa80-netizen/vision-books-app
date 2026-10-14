@@ -616,6 +616,7 @@ export const api = {
         author: string;
         slug: string;
         category?: string;
+        cover?: string;
         short_description?: string;
         normal_price?: number;
         sale_price?: number | null;
