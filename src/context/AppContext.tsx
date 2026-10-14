@@ -264,6 +264,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     // 1. Ensure Firestore is seeded with default documents if empty
     seedFirestoreIfEmpty()
+      .catch((err) => {
+        console.warn('Firestore seed check:', err);
+      })
       .then(async () => {
         if (!isAdmin) return;
         try {
@@ -274,8 +277,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } catch (migrationError) {
           console.error('[Firestore] Product privacy migration did not complete. Publish the updated Firestore rules, then reopen admin.', migrationError);
         }
-      })
-      .catch((err) => console.warn('Firestore seed check:', err));
+      });
 
     // 2. Real-time Firestore Listeners
     const unsubProds = subscribeProducts((items) => {
