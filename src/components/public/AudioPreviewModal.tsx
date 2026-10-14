@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, X, RotateCcw, RotateCw, CheckCircle, Headphones, Gift } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { SafeImage } from '../common/SafeImage';
 
 export const AudioPreviewModal: React.FC = () => {
   const { activePreviewProduct, setActivePreviewProduct, showToast, navigateTo } = useApp();
@@ -58,11 +59,12 @@ export const AudioPreviewModal: React.FC = () => {
 
         {/* Book Presentation */}
         <div className="mt-5 flex gap-4">
-          <img
+          <SafeImage
             src={activePreviewProduct.cover || activePreviewProduct.coverUrl}
             alt={activePreviewProduct.title}
+            title={activePreviewProduct.title}
+            subtitle={activePreviewProduct.author}
             className="h-28 w-20 shrink-0 rounded-lg object-cover shadow-md bg-neutral-900"
-            referrerPolicy="no-referrer"
           />
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-lg font-bold text-white">

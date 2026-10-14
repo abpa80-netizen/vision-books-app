@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, RotateCcw, Check, Shield, MessageCircle, HelpCircle, Phone } from 'lucide-react';
+import { Settings, Save, RotateCcw, Check, Shield, MessageCircle, HelpCircle, Phone, Star } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
+import { BestSellersOrderModal } from '../BestSellersOrderModal';
 
 export const SettingsView: React.FC = () => {
   const { settings, updateSettings, showToast } = useApp();
@@ -13,6 +14,7 @@ export const SettingsView: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [isBestSellersModalOpen, setIsBestSellersModalOpen] = useState(false);
 
   // Sync local form state when settings load or change from server
   useEffect(() => {
@@ -220,6 +222,25 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
+          {/* Configuration des Best-Sellers de l'Accueil */}
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
+              <Star className="h-4 w-4 fill-amber-400" />
+              <span>Best-Sellers Accueil (Positions 1 à 6)</span>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-neutral-300">
+              Définissez quels livres audio apparaissent dans les 6 positions officielles de la page d'accueil et réorganisez leur ordre.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsBestSellersModalOpen(true)}
+              className="mt-4 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
+            >
+              <Star className="h-3.5 w-3.5 fill-amber-400" />
+              <span>Gérer l'ordre des 6 Best-Sellers</span>
+            </button>
+          </div>
+
           <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
             <h3 className="font-display text-sm font-semibold text-white">Maintenance des Données</h3>
             <p className="mt-2 text-xs leading-relaxed text-neutral-400">
@@ -260,6 +281,12 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal d'organisation des Best-Sellers */}
+      <BestSellersOrderModal
+        isOpen={isBestSellersModalOpen}
+        onClose={() => setIsBestSellersModalOpen(false)}
+      />
     </div>
   );
 };

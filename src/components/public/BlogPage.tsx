@@ -3,6 +3,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { Clock, User, ArrowRight, Search, FileText, Sparkles, BookOpen } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { SafeImage } from '../common/SafeImage';
 
 export const BlogPage: React.FC = () => {
   const { blogPosts, navigateTo } = useApp();
@@ -86,7 +87,7 @@ export const BlogPage: React.FC = () => {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredPosts.map((post) => {
               const postUrl = `/blog/${post.slug}`;
-              const image = post.imageUrl || post.image_url || '/src/assets/images/cover_business_empire_1790615532791.jpg';
+              const image = post.imageUrl || post.image_url || '/assets/images/cover_business_empire_1790615532791.jpg';
 
               return (
                 <article
@@ -96,11 +97,12 @@ export const BlogPage: React.FC = () => {
                 >
                   {/* Article Banner */}
                   <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-950">
-                    <img
+                    <SafeImage
                       src={image}
                       alt={post.title}
+                      title={post.title}
+                      subtitle={post.category}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-transparent opacity-80" />
 

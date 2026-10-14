@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { ImageUploader } from '../ImageUploader';
+import { SafeImage } from '../../common/SafeImage';
 
 export const VipPackView: React.FC = () => {
   const { vipPack, updateVipPack, toggleVipPackActive, deleteVipPack, showToast, settings } = useApp();
@@ -47,7 +48,7 @@ export const VipPackView: React.FC = () => {
     if (vipPack) {
       setTitle(vipPack.title || '');
       setSubtitle(vipPack.subtitle || '');
-      setImage(vipPack.image || '/src/assets/images/cover_business_empire_1790615532791.jpg');
+      setImage(vipPack.image || '/assets/images/cover_business_empire_1790615532791.jpg');
       setNormalPrice(vipPack.normal_price ? vipPack.normal_price.toString() : '149.00');
       setSalePrice(vipPack.sale_price !== null && vipPack.sale_price !== undefined ? vipPack.sale_price.toString() : '');
       setDescription(vipPack.description || '');
@@ -78,7 +79,7 @@ export const VipPackView: React.FC = () => {
       // Default template
       setTitle('Pack VIP — La Bibliothèque Privée des Dirigeants');
       setSubtitle('Accès immédiat et illimité à l\'intégralité de nos masterclasses audio et fiches d\'action exclusives');
-      setImage('/src/assets/images/cover_business_empire_1790615532791.jpg');
+      setImage('/assets/images/cover_business_empire_1790615532791.jpg');
       setNormalPrice('149.00');
       setSalePrice('79.00');
       setDescription('Un investissement unique pour acquérir les modèles mentaux des plus grands stratèges et investisseurs mondiaux. Sans abonnement, écoute à vie.');
@@ -497,7 +498,13 @@ export const VipPackView: React.FC = () => {
 
             {image && (
               <div className="mt-4 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950">
-                <img src={image} alt={title} className="h-full w-full object-cover" />
+                <SafeImage
+                  src={image}
+                  alt={title}
+                  title={title}
+                  subtitle={subtitle}
+                  className="h-full w-full object-cover"
+                />
               </div>
             )}
 

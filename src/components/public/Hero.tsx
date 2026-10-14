@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Volume2, Shield, ArrowRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { SafeImage } from '../common/SafeImage';
 
 export const Hero: React.FC = () => {
   const { products, setActivePreviewProduct } = useApp();
@@ -92,14 +93,12 @@ export const Hero: React.FC = () => {
               {/* Card visual frame */}
               <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 p-2 shadow-2xl backdrop-blur-sm">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-neutral-950">
-                  <img
-                    src="/src/assets/images/hero_vision_books_1790615521205.jpg"
+                  <SafeImage
+                    src="/assets/images/hero_vision_books_1790615521205.jpg"
                     alt="Auditeur concentré avec casque haut de gamme écoutant VISION BOOKS"
+                    title="VISION BOOKS — Masterclasses Audio"
+                    subtitle="L'Élite du Business et du Savoir Stratégique"
                     className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/30 to-transparent" />
 

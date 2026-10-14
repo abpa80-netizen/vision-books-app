@@ -28,6 +28,7 @@ export function initDatabase() {
       slug TEXT NOT NULL UNIQUE,
       icon TEXT NOT NULL,
       description TEXT DEFAULT '',
+      image TEXT DEFAULT '',
       is_active INTEGER DEFAULT 1,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -246,6 +247,27 @@ export function initDatabase() {
   try { db.exec('ALTER TABLE leads ADD COLUMN followup_status_j1 TEXT DEFAULT "a_envoyer"'); } catch {}
   try { db.exec('ALTER TABLE leads ADD COLUMN followup_status_j2 TEXT DEFAULT "a_envoyer"'); } catch {}
   try { db.exec('ALTER TABLE leads ADD COLUMN followup_status_j3 TEXT DEFAULT "a_envoyer"'); } catch {}
+  try { db.exec('ALTER TABLE categories ADD COLUMN image TEXT DEFAULT ""'); } catch {}
+  try { db.exec('ALTER TABLE categories ADD COLUMN display_order INTEGER DEFAULT 999'); } catch {}
+
+  // Ensure default categories possess their canonical images and strategic display order
+  try {
+    const defaultCats = [
+      { id: 'cat-business-entrepreneuriat', image: '/assets/images/cat_entrepreneuriat.jpg', order: 1 },
+      { id: 'cat-liberte-financiere-succes', image: '/assets/images/cat_finance.jpg', order: 2 },
+      { id: 'cat-investissement-trading', image: '/assets/images/cat_trading.jpg', order: 3 },
+      { id: 'cat-business-en-ligne-marketing', image: '/assets/images/cat_marketing.jpg', order: 4 },
+      { id: 'cat-developpement-personnel', image: '/assets/images/cat_dev_perso.jpg', order: 5 },
+      { id: 'cat-mindset-motivation', image: '/assets/images/cat_mindset.jpg', order: 6 },
+      { id: 'cat-spiritualite-bien-etre', image: '/assets/images/cat_spiritualite.jpg', order: 7 },
+      { id: 'cat-amour-relation', image: '/assets/images/cat_relations.jpg', order: 8 },
+      { id: 'cat-autres', image: '/assets/images/cat_autres.jpg', order: 9 },
+    ];
+    const updateStmt = db.prepare('UPDATE categories SET image = ?, display_order = ? WHERE id = ? AND (image = "" OR image IS NULL OR display_order = 999 OR display_order IS NULL)');
+    for (const d of defaultCats) {
+      updateStmt.run(d.image, d.order, d.id);
+    }
+  } catch {}
 
   seedInitialData();
 }
@@ -279,8 +301,8 @@ function seedInitialData() {
   const checkCat = db.prepare('SELECT COUNT(*) as count FROM categories').get() as { count: number };
   if (checkCat.count === 0) {
     const insertCat = db.prepare(`
-      INSERT INTO categories (id, name, slug, icon, description, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (id, name, slug, icon, description, image, display_order, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const now = new Date().toISOString();
@@ -292,6 +314,8 @@ function seedInitialData() {
         slug: 'business-entrepreneuriat',
         icon: '📈',
         description: 'Stratégies de création, de croissance et de gestion d\'entreprises durables.',
+        image: '/assets/images/cat_entrepreneuriat.jpg',
+        display_order: 1,
         is_active: 1,
       },
       {
@@ -300,6 +324,8 @@ function seedInitialData() {
         slug: 'liberte-financiere-succes',
         icon: '💰',
         description: 'Principes fondamentaux pour bâtir des revenus passifs et atteindre l\'indépendance.',
+        image: '/assets/images/cat_finance.jpg',
+        display_order: 2,
         is_active: 1,
       },
       {
@@ -308,6 +334,8 @@ function seedInitialData() {
         slug: 'investissement-trading',
         icon: '📊',
         description: 'Bourse, immobilier, cryptomonnaies et gestion rigoureuse de portefeuille.',
+        image: '/assets/images/cat_trading.jpg',
+        display_order: 3,
         is_active: 1,
       },
       {
@@ -316,6 +344,8 @@ function seedInitialData() {
         slug: 'business-en-ligne-marketing',
         icon: '💻',
         description: 'Acquisition client, tunnels de vente, e-commerce et création de marque.',
+        image: '/assets/images/cat_marketing.jpg',
+        display_order: 4,
         is_active: 1,
       },
       {
@@ -324,22 +354,8 @@ function seedInitialData() {
         slug: 'developpement-personnel',
         icon: '🧠',
         description: 'Optimisation cognitive, habitudes puissantes, discipline et clarté mentale.',
-        is_active: 1,
-      },
-      {
-        id: 'cat-spiritualite-bien-etre',
-        name: 'Spiritualité & Bien-être',
-        slug: 'spiritualite-bien-etre',
-        icon: '🕊️',
-        description: 'Sérénité intérieure, alignement personnel, méditation et énergie vitale.',
-        is_active: 1,
-      },
-      {
-        id: 'cat-amour-relation',
-        name: 'Amour & Relation',
-        slug: 'amour-relation',
-        icon: '❤️',
-        description: 'Communication bienveillante, intelligence relationnelle et harmonie du couple.',
+        image: '/assets/images/cat_dev_perso.jpg',
+        display_order: 5,
         is_active: 1,
       },
       {
@@ -348,6 +364,28 @@ function seedInitialData() {
         slug: 'mindset-motivation',
         icon: '⚡',
         description: 'Résilience à toute épreuve, détermination inébranlable et dépassement de soi.',
+        image: '/assets/images/cat_mindset.jpg',
+        display_order: 6,
+        is_active: 1,
+      },
+      {
+        id: 'cat-spiritualite-bien-etre',
+        name: 'Spiritualité & Bien-être',
+        slug: 'spiritualite-bien-etre',
+        icon: '🕊️',
+        description: 'Sérénité intérieure, alignement personnel, méditation et énergie vitale.',
+        image: '/assets/images/cat_spiritualite.jpg',
+        display_order: 7,
+        is_active: 1,
+      },
+      {
+        id: 'cat-amour-relation',
+        name: 'Amour & Relation',
+        slug: 'amour-relation',
+        icon: '❤️',
+        description: 'Communication bienveillante, intelligence relationnelle et harmonie du couple.',
+        image: '/assets/images/cat_relations.jpg',
+        display_order: 8,
         is_active: 1,
       },
       {
@@ -356,12 +394,14 @@ function seedInitialData() {
         slug: 'autres',
         icon: '✨',
         description: 'Sujets transversaux, biographies inspirantes et essais prospectifs.',
+        image: '/assets/images/cat_autres.jpg',
+        display_order: 9,
         is_active: 1,
       },
     ];
 
     for (const cat of initialCategories) {
-      insertCat.run(cat.id, cat.name, cat.slug, cat.icon, cat.description, cat.is_active, now, now);
+      insertCat.run(cat.id, cat.name, cat.slug, cat.icon, cat.description, cat.image, cat.display_order, cat.is_active, now, now);
     }
   }
 
@@ -384,7 +424,7 @@ function seedInitialData() {
         title: 'L\'Empire du Business Moderne',
         author: 'Marc de Saint-Clair',
         slug: 'l-empire-du-business-moderne',
-        cover: '/src/assets/images/cover_business_empire_1790615532791.jpg',
+        cover: '/assets/images/cover_business_empire_1790615532791.jpg',
         category: 'business-entrepreneuriat',
         normal_price: 49.90,
         sale_price: 29.90,
@@ -406,7 +446,7 @@ function seedInitialData() {
         title: 'La Voie de la Liberté Financière',
         author: 'Elena Valenti',
         slug: 'la-voie-de-la-liberte-financiere',
-        cover: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+        cover: '/assets/images/cover_financial_liberty_1790615544438.jpg',
         category: 'liberte-financiere-succes',
         normal_price: 39.00,
         sale_price: 27.00,
@@ -428,7 +468,7 @@ function seedInitialData() {
         title: 'Le Pouvoir Inflexible du Mindset',
         author: 'Koffi Mensah',
         slug: 'le-pouvoir-inflexible-du-mindset',
-        cover: '/src/assets/images/cover_mindset_power_1790615556990.jpg',
+        cover: '/assets/images/cover_mindset_power_1790615556990.jpg',
         category: 'mindset-motivation',
         normal_price: 35.00,
         sale_price: 24.50,
@@ -450,7 +490,7 @@ function seedInitialData() {
         title: 'Maîtriser les Marchés et le Trading Systématique',
         author: 'Gilles Rochefort',
         slug: 'maitriser-les-marches-et-le-trading-systematique',
-        cover: '/src/assets/images/cover_business_empire_1790615532791.jpg',
+        cover: '/assets/images/cover_business_empire_1790615532791.jpg',
         category: 'investissement-trading',
         normal_price: 55.00,
         sale_price: 34.00,
@@ -472,7 +512,7 @@ function seedInitialData() {
         title: 'L\'Art du Marketing d\'Acquisition & Copywriting',
         author: 'Sarah Bensalem',
         slug: 'l-art-du-marketing-d-acquisition-copywriting',
-        cover: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+        cover: '/assets/images/cover_financial_liberty_1790615544438.jpg',
         category: 'business-en-ligne-marketing',
         normal_price: 42.00,
         sale_price: 28.50,
@@ -494,7 +534,7 @@ function seedInitialData() {
         title: 'L\'Éveil de la Présence & Alignement Intérieur',
         author: 'Thierry Vandevelde',
         slug: 'l-eveil-de-la-presence-alignement-interieur',
-        cover: '/src/assets/images/cover_mindset_power_1790615556990.jpg',
+        cover: '/assets/images/cover_mindset_power_1790615556990.jpg',
         category: 'spiritualite-bien-etre',
         normal_price: 30.00,
         sale_price: 22.00,
@@ -553,7 +593,7 @@ function seedInitialData() {
         id: 'lm-guide-liberte-financiere',
         title: 'Guide PDF : Les 10 Principes Inviolables de l\'Indépendance Financière',
         slug: 'guide-liberte-financiere',
-        image: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+        image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
         description: 'Découvrez la méthode étape par étape pour automatiser votre épargne, éliminer vos dettes et générer vos premiers flux de revenus passifs durables.',
         benefits: JSON.stringify([
           'Les 3 règles d\'or de l\'allocation de patrimoine pour débutants et confirmés',
@@ -569,7 +609,7 @@ function seedInitialData() {
         id: 'lm-masterclass-audio-negociation',
         title: 'Masterclass Audio Confidentielle : L\'Art de Convaincre et Clôturer',
         slug: 'masterclass-audio-negociation',
-        image: '/src/assets/images/cover_business_empire_1790615532791.jpg',
+        image: '/assets/images/cover_business_empire_1790615532791.jpg',
         description: 'Une session audio immersive de 45 minutes pour apprendre à négocier des contrats à forte valeur, surmonter les objections et imposer votre autorité commerciale.',
         benefits: JSON.stringify([
           'Techniques d\'ancrage psychologique pour défendre vos tarifs sans brader',
@@ -584,7 +624,7 @@ function seedInitialData() {
         id: 'lm-checklist-mindset-invincible',
         title: 'Checklist Décisionnelle : Le Protocole Mental des Dirigeants d\'Élite',
         slug: 'protocole-mindset-invincible',
-        image: '/src/assets/images/cover_mindset_power_1790615556990.jpg',
+        image: '/assets/images/cover_mindset_power_1790615556990.jpg',
         description: 'Le protocole matinal de 20 minutes pour forger un focus inébranlable, vaincre l\'inertie et aborder les journées complexes avec lucidité.',
         benefits: JSON.stringify([
           'Le rituel des 3 blocs matinaux sans distraction digitale',
@@ -776,7 +816,7 @@ function seedInitialData() {
         author: 'Alexandre Beaulieu',
         date: '18 Mars 2026',
         read_time: '5 min',
-        image_url: '/src/assets/images/cover_business_empire_1790615532791.jpg',
+        image_url: '/assets/images/cover_business_empire_1790615532791.jpg',
         is_published: 1,
       },
       {
@@ -789,7 +829,7 @@ function seedInitialData() {
         author: 'Elena Valenti',
         date: '12 Mars 2026',
         read_time: '6 min',
-        image_url: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+        image_url: '/assets/images/cover_financial_liberty_1790615544438.jpg',
         is_published: 1,
       },
       {
@@ -802,7 +842,7 @@ function seedInitialData() {
         author: 'Dr. Lucas Vane',
         date: '5 Mars 2026',
         read_time: '4 min',
-        image_url: '/src/assets/images/cover_mindset_power_1790615556990.jpg',
+        image_url: '/assets/images/cover_mindset_power_1790615556990.jpg',
         is_published: 1,
       },
     ];
@@ -915,7 +955,7 @@ function seedInitialData() {
       'pack-vip-elite',
       'Pack VIP — La Bibliothèque Privée des Dirigeants',
       'Accès immédiat et illimité à l\'intégralité des 6 masterclasses audio, synthèses exécutives et bonus confidentiels.',
-      '/src/assets/images/cover_business_empire_1790615532791.jpg',
+      '/assets/images/cover_business_empire_1790615532791.jpg',
       149.00,
       79.00,
       'Un investissement unique pour acquérir les modèles mentaux des plus grands stratèges et investisseurs mondiaux. Sans abonnement, écoute à vie.',

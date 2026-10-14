@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { SafeImage } from '../common/SafeImage';
 
 interface BlogPostPageProps {
   slug: string;
@@ -63,7 +64,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({ slug }) => {
     );
   }
 
-  const image = post.imageUrl || post.image_url || '/src/assets/images/cover_business_empire_1790615532791.jpg';
+  const image = post.imageUrl || post.image_url || '/assets/images/cover_business_empire_1790615532791.jpg';
 
   // Format content paragraphs
   const contentText = post.content || post.excerpt;
@@ -131,9 +132,11 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({ slug }) => {
 
           {/* Featured Image */}
           <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 shadow-2xl">
-            <img
+            <SafeImage
               src={image}
               alt={post.title}
+              title={post.title}
+              subtitle={post.category}
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
@@ -202,9 +205,10 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({ slug }) => {
                   className="group rounded-xl border border-neutral-800 bg-neutral-950/80 p-3.5 transition-all hover:border-amber-500/50 hover:bg-neutral-900 cursor-pointer flex flex-col justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <img
+                    <SafeImage
                       src={book.cover || book.coverUrl}
                       alt={book.title}
+                      title={book.title}
                       className="h-12 w-9 rounded object-cover shadow-sm bg-neutral-950 shrink-0"
                     />
                     <div className="min-w-0">

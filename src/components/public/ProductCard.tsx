@@ -3,6 +3,7 @@ import { ArrowRight, Star, Headphones, BookOpen, Package, Play, Gift, Clock, Spa
 import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { trackProductClick } from '../../services/analytics';
+import { SafeImage } from '../common/SafeImage';
 
 interface ProductCardProps {
   product: Product;
@@ -68,15 +69,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       {/* Top Media: 3:4 Cover Art */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
-        <img
+        <SafeImage
           src={product.cover || product.coverUrl}
           alt={`Couverture audio de ${product.title}`}
+          title={product.title}
+          subtitle={product.author}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          onError={(e) => {
-            (e.currentTarget as HTMLElement).style.display = 'none';
-          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-transparent opacity-70" />
 
@@ -234,7 +232,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             }}
             className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-2.5 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-neutral-950 transition-all hover:bg-amber-400 active:scale-95 shadow-md shadow-amber-500/10"
           >
-            <span>Voir le produit</span>
+            <span>{product.cta_text || 'Découvrir le livre'}</span>
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 hidden xs:inline" />
           </a>
         </div>

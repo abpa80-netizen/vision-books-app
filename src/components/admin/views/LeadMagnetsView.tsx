@@ -23,6 +23,7 @@ import { LeadMagnet, LeadMagnetMarketingContent } from '../../../types';
 import { ImageUploader } from '../ImageUploader';
 import { FileUploader } from '../FileUploader';
 import { LeadMagnetAiGeneratorModal } from './LeadMagnetAiGeneratorModal';
+import { SafeImage } from '../../common/SafeImage';
 
 export const LeadMagnetsView: React.FC = () => {
   const {
@@ -47,7 +48,7 @@ export const LeadMagnetsView: React.FC = () => {
     subtitle: '',
     marketing_content: '',
     slug: '',
-    image: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+    image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
     description: '',
     benefitsText: '',
     file_url: '/downloads/guide-visionbooks.pdf',
@@ -78,7 +79,7 @@ export const LeadMagnetsView: React.FC = () => {
       subtitle: '',
       marketing_content: '',
       slug: '',
-      image: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+      image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
       description: '',
       benefitsText: 'Guide stratégique complet et prêt à l\'emploi\nModèles mentaux et erreurs à éviter\nTemplate actionnable inclus',
       file_url: '/downloads/ressource-gratuite.pdf',
@@ -100,7 +101,7 @@ export const LeadMagnetsView: React.FC = () => {
       subtitle: lm.subtitle || '',
       marketing_content: lm.marketing_content || '',
       slug: lm.slug || '',
-      image: lm.image || '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+      image: lm.image || '/assets/images/cover_financial_liberty_1790615544438.jpg',
       description: lm.description || '',
       benefitsText: Array.isArray(lm.benefits) ? lm.benefits.join('\n') : (lm.benefits || ''),
       file_url: lm.file_url || '/downloads/ressource.pdf',
@@ -325,9 +326,11 @@ export const LeadMagnetsView: React.FC = () => {
               >
                 {/* Visual Header / Cover Image */}
                 <div className="relative h-44 w-full overflow-hidden rounded-t-xl bg-neutral-950">
-                  <img
-                    src={lm.image || '/src/assets/images/cover_financial_liberty_1790615544438.jpg'}
+                  <SafeImage
+                    src={lm.image || '/assets/images/cover_financial_liberty_1790615544438.jpg'}
                     alt={lm.title}
+                    title={lm.title}
+                    subtitle="Guide Stratégique"
                     className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
@@ -583,9 +586,9 @@ export const LeadMagnetsView: React.FC = () => {
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-[10px] text-neutral-500">Sélection rapide :</span>
                   {[
-                    { label: 'Finance', path: '/src/assets/images/cover_financial_liberty_1790615544438.jpg' },
-                    { label: 'Business', path: '/src/assets/images/cover_business_empire_1790615532791.jpg' },
-                    { label: 'Mindset', path: '/src/assets/images/cover_mindset_power_1790615556990.jpg' },
+                    { label: 'Finance', path: '/assets/images/cover_financial_liberty_1790615544438.jpg' },
+                    { label: 'Business', path: '/assets/images/cover_business_empire_1790615532791.jpg' },
+                    { label: 'Mindset', path: '/assets/images/cover_mindset_power_1790615556990.jpg' },
                   ].map((preset) => (
                     <button
                       key={preset.label}

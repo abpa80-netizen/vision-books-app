@@ -10,6 +10,7 @@ import { LeadMagnetCapturePage } from './components/public/LeadMagnetCapturePage
 import { ThankYouPage } from './components/public/ThankYouPage';
 import { BlogPage } from './components/public/BlogPage';
 import { BlogPostPage } from './components/public/BlogPostPage';
+import { ManifestePage } from './components/public/ManifestePage';
 import { CommercialAssistant } from './components/chat/CommercialAssistant';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 import { trackSiteVisit } from './services/analytics';
@@ -112,6 +113,11 @@ const MainRouter: React.FC = () => {
       const rawSlug = leadMagnetMatch[1].split('?')[0].replace(/\/$/, '');
       const cleanSlug = decodeURIComponent(rawSlug);
       return <LeadMagnetCapturePage slug={cleanSlug} />;
+    }
+
+    // Manifeste Route: /manifeste
+    if (currentPath === '/manifeste' || currentPath === '/manifeste/') {
+      return <ManifestePage />;
     }
 
     // Confirmation / Thank You Page: /merci

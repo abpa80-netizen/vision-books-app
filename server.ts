@@ -114,14 +114,25 @@ app.post('/api/upload', (req, res) => {
 
     const uniqueFilename = `${Date.now()}-${cleanFilename}`;
     const filePath = path.join(uploadsDir, uniqueFilename);
-
     fs.writeFileSync(filePath, buffer);
+
+    const publicUploadsDir = path.resolve(__dirname, 'public/uploads');
+    if (!fs.existsSync(publicUploadsDir)) {
+      try { fs.mkdirSync(publicUploadsDir, { recursive: true }); } catch {}
+    }
+    try {
+      fs.writeFileSync(path.join(publicUploadsDir, uniqueFilename), buffer);
+    } catch {}
+
+    const publicUrl = `/uploads/${uniqueFilename}`;
 
     res.json({
       success: true,
-      url: `/uploads/${uniqueFilename}`,
+      url: publicUrl,
+      localUrl: publicUrl,
       filename: uniqueFilename,
       size: buffer.length,
+      storageType: 'local_disk',
     });
   } catch (err: any) {
     console.error('Error during upload:', err);
@@ -158,15 +169,49 @@ app.get('/api/categories', (req, res) => {
   try {
     const activeOnly = req.query.active_only === 'true';
     const query = activeOnly
-      ? 'SELECT * FROM categories WHERE is_active = 1 ORDER BY created_at ASC'
-      : 'SELECT * FROM categories ORDER BY created_at ASC';
+      ? `SELECT * FROM categories 
+         WHERE is_active = 1 
+         ORDER BY CASE WHEN slug = 'autres' OR id = 'cat-autres' THEN 9999 ELSE COALESCE(display_order, 999) END ASC, created_at ASC`
+      : `SELECT * FROM categories 
+         ORDER BY CASE WHEN slug = 'autres' OR id = 'cat-autres' THEN 9999 ELSE COALESCE(display_order, 999) END ASC, created_at ASC`;
     const categories = db.prepare(query).all().map((cat: any) => ({
       ...cat,
       is_active: Boolean(cat.is_active),
+      display_order: cat.display_order != null ? Number(cat.display_order) : 999,
+      order: cat.display_order != null ? Number(cat.display_order) : 999,
     }));
     res.json(categories);
   } catch (error: any) {
     console.error('Error fetching categories:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/categories/reorder
+app.post('/api/categories/reorder', (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+    if (!Array.isArray(orderedIds)) {
+      return res.status(400).json({ error: 'orderedIds array required' });
+    }
+    const stmt = db.prepare('UPDATE categories SET display_order = ?, updated_at = ? WHERE id = ?');
+    const now = new Date().toISOString();
+    let orderIndex = 1;
+    for (const id of orderedIds) {
+      stmt.run(orderIndex++, now, id);
+    }
+    const categories = db.prepare(`
+      SELECT * FROM categories 
+      ORDER BY CASE WHEN slug = 'autres' OR id = 'cat-autres' THEN 9999 ELSE COALESCE(display_order, 999) END ASC, created_at ASC
+    `).all().map((cat: any) => ({
+      ...cat,
+      is_active: Boolean(cat.is_active),
+      display_order: cat.display_order != null ? Number(cat.display_order) : 999,
+      order: cat.display_order != null ? Number(cat.display_order) : 999,
+    }));
+    res.json(categories);
+  } catch (error: any) {
+    console.error('Error reordering categories:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -179,7 +224,12 @@ app.get('/api/categories/:id', (req, res) => {
     if (!cat) {
       return res.status(404).json({ error: 'Catégorie non trouvée.' });
     }
-    res.json({ ...cat, is_active: Boolean(cat.is_active) });
+    res.json({
+      ...cat,
+      is_active: Boolean(cat.is_active),
+      display_order: cat.display_order != null ? Number(cat.display_order) : 999,
+      order: cat.display_order != null ? Number(cat.display_order) : 999,
+    });
   } catch (error: any) {
     console.error('Error fetching category:', error);
     res.status(500).json({ error: error.message });
@@ -189,7 +239,7 @@ app.get('/api/categories/:id', (req, res) => {
 // POST /api/categories
 app.post('/api/categories', (req, res) => {
   try {
-    const { name, icon, description, is_active } = req.body;
+    const { name, icon, description, is_active, image, imageUrl, cover, display_order, order } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Le nom de la catégorie est obligatoire.' });
     }
@@ -199,16 +249,23 @@ app.post('/api/categories', (req, res) => {
     const id = req.body.id || `cat-${Date.now()}`;
     const now = new Date().toISOString();
     const activeInt = is_active !== false ? 1 : 0;
+    const categoryImage = image || imageUrl || cover || '';
+    const assignedOrder = display_order != null ? Number(display_order) : (order != null ? Number(order) : 999);
 
     const stmt = db.prepare(`
-      INSERT INTO categories (id, name, slug, icon, description, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (id, name, slug, icon, description, image, display_order, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(id, name.trim(), slug, icon || '📚', description || '', activeInt, now, now);
+    stmt.run(id, name.trim(), slug, icon || '📚', description || '', categoryImage, assignedOrder, activeInt, now, now);
 
     const newCat = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as any;
-    res.status(201).json({ ...newCat, is_active: Boolean(newCat.is_active) });
+    res.status(201).json({
+      ...newCat,
+      is_active: Boolean(newCat.is_active),
+      display_order: newCat.display_order != null ? Number(newCat.display_order) : 999,
+      order: newCat.display_order != null ? Number(newCat.display_order) : 999,
+    });
   } catch (error: any) {
     console.error('Error creating category:', error);
     res.status(500).json({ error: error.message });
@@ -219,7 +276,7 @@ app.post('/api/categories', (req, res) => {
 app.put('/api/categories/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { name, slug, icon, description, is_active } = req.body;
+    const { name, slug, icon, description, is_active, image, imageUrl, cover, display_order, order } = req.body;
 
     const existing = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as any;
     if (!existing) {
@@ -231,10 +288,12 @@ app.put('/api/categories/:id', (req, res) => {
 
     const now = new Date().toISOString();
     const activeInt = is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active;
+    const newImage = image !== undefined ? image : (imageUrl !== undefined ? imageUrl : (cover !== undefined ? cover : existing.image));
+    const newOrder = display_order !== undefined ? Number(display_order) : (order !== undefined ? Number(order) : (existing.display_order != null ? Number(existing.display_order) : 999));
 
     const stmt = db.prepare(`
       UPDATE categories
-      SET name = ?, slug = ?, icon = ?, description = ?, is_active = ?, updated_at = ?
+      SET name = ?, slug = ?, icon = ?, description = ?, image = ?, display_order = ?, is_active = ?, updated_at = ?
       WHERE id = ?
     `);
 
@@ -243,13 +302,20 @@ app.put('/api/categories/:id', (req, res) => {
       updatedSlug,
       icon !== undefined ? icon : existing.icon,
       description !== undefined ? description : existing.description,
+      newImage || '',
+      newOrder,
       activeInt,
       now,
       id
     );
 
     const updated = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as any;
-    res.json({ ...updated, is_active: Boolean(updated.is_active) });
+    res.json({
+      ...updated,
+      is_active: Boolean(updated.is_active),
+      display_order: updated.display_order != null ? Number(updated.display_order) : 999,
+      order: updated.display_order != null ? Number(updated.display_order) : 999,
+    });
   } catch (error: any) {
     console.error('Error updating category:', error);
     res.status(500).json({ error: error.message });
@@ -456,7 +522,7 @@ app.post('/api/products', (req, res) => {
       title.trim(),
       author.trim(),
       slug,
-      cover || '/src/assets/images/cover_business_empire_1790615532791.jpg',
+      cover || '/assets/images/cover_business_empire_1790615532791.jpg',
       category || 'business-entrepreneuriat',
       Number(normal_price),
       sale_price !== null && sale_price !== undefined && sale_price !== '' ? Number(sale_price) : null,
@@ -1165,7 +1231,7 @@ app.post('/api/lead-magnets', (req, res) => {
       subtitle || '',
       marketing_content || '',
       finalSlug,
-      image || '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+      image || '/assets/images/cover_financial_liberty_1790615544438.jpg',
       description || '',
       benefitsJson,
       file_url || `/downloads/${finalSlug}.pdf`,
@@ -2360,7 +2426,7 @@ app.post('/api/blog', (req, res) => {
       author || 'Équipe Éditoriale VISION BOOKS',
       date || defaultDate,
       read_time || '5 min',
-      image_url || '/src/assets/images/cover_business_empire_1790615532791.jpg',
+      image_url || '/assets/images/cover_business_empire_1790615532791.jpg',
       publishedInt,
       now,
       now
@@ -2762,7 +2828,7 @@ app.put('/api/vip-pack', (req, res) => {
       stmt.run(
         title || 'Pack VIP — La Bibliothèque Privée des Dirigeants',
         subtitle || '',
-        image || '/src/assets/images/cover_business_empire_1790615532791.jpg',
+        image || '/assets/images/cover_business_empire_1790615532791.jpg',
         Number(normal_price || 149),
         sale_price !== undefined && sale_price !== '' && sale_price !== null ? Number(sale_price) : 79,
         description || '',

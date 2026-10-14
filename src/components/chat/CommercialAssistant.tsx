@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useApp } from '../../context/AppContext';
+import { SafeImage } from '../common/SafeImage';
 
 interface ChatMessage {
   id: string;
@@ -367,9 +368,11 @@ export const CommercialAssistant: React.FC = () => {
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {prod.cover ? (
-                                <img
+                                <SafeImage
                                   src={prod.cover}
                                   alt={prod.title}
+                                  title={prod.title}
+                                  subtitle={prod.author}
                                   className="h-10 w-10 shrink-0 rounded-lg object-cover border border-neutral-800"
                                 />
                               ) : (

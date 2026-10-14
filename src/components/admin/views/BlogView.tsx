@@ -21,6 +21,7 @@ import {
 import { useApp } from '../../../context/AppContext';
 import { BlogPost } from '../../../types';
 import { ImageUploader } from '../ImageUploader';
+import { SafeImage } from '../../common/SafeImage';
 
 export const BlogView: React.FC = () => {
   const {
@@ -47,15 +48,16 @@ export const BlogView: React.FC = () => {
   const [author, setAuthor] = useState('Équipe Éditoriale VISION BOOKS');
   const [date, setDate] = useState('');
   const [readTime, setReadTime] = useState('5 min');
-  const [imageUrl, setImageUrl] = useState('/src/assets/images/cover_business_empire_1790615532791.jpg');
+  const [imageUrl, setImageUrl] = useState('/assets/images/cover_business_empire_1790615532791.jpg');
   const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
   const [isPublished, setIsPublished] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
 
   const sampleCovers = [
-    { label: 'Business & Stratégie', url: '/src/assets/images/cover_business_empire_1790615532791.jpg' },
-    { label: 'Finance & Richesse', url: '/src/assets/images/cover_financial_liberty_1790615544438.jpg' },
-    { label: 'Mindset & Leadership', url: '/src/assets/images/cover_mindset_power_1790615556990.jpg' },
+    { label: 'Business & Stratégie', url: '/assets/images/cover_business_empire_1790615532791.jpg' },
+    { label: 'Finance & Richesse', url: '/assets/images/cover_financial_liberty_1790615544438.jpg' },
+    { label: 'Mindset & Leadership', url: '/assets/images/cover_mindset_power_1790615556990.jpg' },
   ];
 
   const categories = [
@@ -80,10 +82,11 @@ export const BlogView: React.FC = () => {
       })
     );
     setReadTime('5 min');
-    setImageUrl('/src/assets/images/cover_business_empire_1790615532791.jpg');
+    setImageUrl('/assets/images/cover_business_empire_1790615532791.jpg');
     setExcerpt('');
     setContent('');
     setIsPublished(true);
+    setIsFeatured(false);
     setIsAddModalOpen(true);
   };
 
@@ -95,10 +98,11 @@ export const BlogView: React.FC = () => {
     setAuthor(post.author);
     setDate(post.date);
     setReadTime(post.readTime || post.read_time || '5 min');
-    setImageUrl(post.imageUrl || post.image_url || '/src/assets/images/cover_business_empire_1790615532791.jpg');
+    setImageUrl(post.imageUrl || post.image_url || '/assets/images/cover_business_empire_1790615532791.jpg');
     setExcerpt(post.excerpt);
     setContent(post.content || '');
     setIsPublished(post.is_published !== false);
+    setIsFeatured(Boolean(post.is_featured || post.featured));
     setIsAddModalOpen(true);
   };
 
@@ -132,6 +136,8 @@ export const BlogView: React.FC = () => {
       excerpt: excerpt.trim(),
       content: content.trim(),
       is_published: isPublished,
+      is_featured: isFeatured,
+      featured: isFeatured,
     };
 
     if (editingPost) {
@@ -239,7 +245,7 @@ export const BlogView: React.FC = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredPosts.map((post) => {
           const isPub = post.is_published !== false;
-          const displayImage = post.imageUrl || post.image_url || '/src/assets/images/cover_business_empire_1790615532791.jpg';
+          const displayImage = post.imageUrl || post.image_url || '/assets/images/cover_business_empire_1790615532791.jpg';
 
           return (
             <div
@@ -248,29 +254,35 @@ export const BlogView: React.FC = () => {
             >
               {/* Cover Banner */}
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-950">
-                <img
+                <SafeImage
                   src={displayImage}
                   alt={post.title}
+                  title={post.title}
+                  subtitle={post.category}
                   className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/30 to-transparent" />
 
-                <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1.5 pointer-events-none">
                   <span className="rounded-full bg-neutral-950/80 border border-white/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 backdrop-blur-md">
                     {post.category}
                   </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${
-                      isPub
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                    }`}
-                  >
-                    {isPub ? 'Publié' : 'Brouillon'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {(post.is_featured || post.featured) && (
+                      <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+                        À la une
+                      </span>
+                    )}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${
+                        isPub
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                          : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                      }`}
+                    >
+                      {isPub ? 'Publié' : 'Brouillon'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="absolute bottom-2 left-3 flex items-center gap-2 text-[10px] text-neutral-400">
@@ -555,6 +567,28 @@ export const BlogView: React.FC = () => {
                   onClick={() => setIsPublished(!isPublished)}
                   className={`flex h-6 w-11 items-center rounded-full transition-colors ${
                     isPublished ? 'bg-amber-500 justify-end pr-1' : 'bg-neutral-800 justify-start pl-1'
+                  }`}
+                >
+                  <span className="h-4 w-4 rounded-full bg-neutral-950 shadow-sm" />
+                </button>
+              </div>
+
+              {/* Mis en avant sur la page d'accueil */}
+              <div className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Mettre en avant sur la page d'accueil</span>
+                  </div>
+                  <div className="text-[11px] text-neutral-400">
+                    {isFeatured ? 'Affiché comme article principal du Journal sur la page d\'accueil' : 'Ne sera affiché sur l\'accueil que s\'il est le plus récent'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsFeatured(!isFeatured)}
+                  className={`flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isFeatured ? 'bg-amber-500 justify-end pr-1' : 'bg-neutral-800 justify-start pl-1'
                   }`}
                 >
                   <span className="h-4 w-4 rounded-full bg-neutral-950 shadow-sm" />

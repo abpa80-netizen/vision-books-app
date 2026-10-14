@@ -227,13 +227,20 @@ export const AdminLayout: React.FC = () => {
                   <img
                     src={user.photoURL}
                     alt={user.displayName || 'Admin'}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                      const fallbackEl = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (fallbackEl) fallbackEl.style.display = 'flex';
+                    }}
                     className="h-7 w-7 rounded-full border border-amber-500/40 object-cover"
                   />
-                ) : (
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-[11px] font-bold text-amber-400 border border-amber-500/30">
-                    {(user.displayName || user.email || 'A').charAt(0).toUpperCase()}
-                  </div>
-                )}
+                ) : null}
+                <div
+                  style={{ display: user.photoURL ? 'none' : 'flex' }}
+                  className="h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-[11px] font-bold text-amber-400 border border-amber-500/30"
+                >
+                  {(user.displayName || user.email || 'A').charAt(0).toUpperCase()}
+                </div>
                 <div className="hidden sm:block text-left">
                   <div className="text-[11px] font-semibold text-white truncate max-w-[130px]">
                     {user.displayName || user.email?.split('@')[0]}

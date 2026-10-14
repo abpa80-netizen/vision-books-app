@@ -2,6 +2,7 @@ import React from 'react';
 import { Crown, Sparkles, CheckCircle2, ArrowRight, MessageCircle, Gift, ShieldCheck, Clock } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { trackWhatsAppClick } from '../../services/analytics';
+import { SafeImage } from '../common/SafeImage';
 
 export const VipPackSection: React.FC = () => {
   const { vipPack, settings, showToast } = useApp();
@@ -80,13 +81,12 @@ Merci de m'indiquer la marche à suivre pour débloquer immédiatement mes accè
             <div className="lg:col-span-5">
               <div className="relative mx-auto max-w-sm lg:max-w-none">
                 <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 shadow-2xl">
-                  <img
-                    src={vipPack.image || '/src/assets/images/cover_business_empire_1790615532791.jpg'}
+                  <SafeImage
+                    src={vipPack.image || '/assets/images/cover_business_empire_1790615532791.jpg'}
                     alt={vipPack.title}
+                    title={vipPack.title}
+                    subtitle={vipPack.subtitle || 'Édition Intégrale Élite'}
                     className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-60" />
 

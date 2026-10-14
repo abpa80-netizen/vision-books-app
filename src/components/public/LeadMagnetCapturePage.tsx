@@ -21,6 +21,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { LeadMagnet } from '../../types';
 import { api } from '../../services/api';
+import { SafeImage } from '../common/SafeImage';
 import {
   trackLeadSubmit,
   trackLeadMagnetDownload,
@@ -337,13 +338,12 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
             {/* 1. Image du Lead Magnet (Mockup 3D soigné) */}
             <div className="relative mx-auto max-w-md overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 shadow-2xl shadow-amber-500/10 group">
               <div className="aspect-[16/10] w-full overflow-hidden">
-                <img
-                  src={leadMagnet.image || '/src/assets/images/cover_financial_liberty_1790615544438.jpg'}
+                <SafeImage
+                  src={leadMagnet.image || '/assets/images/cover_financial_liberty_1790615544438.jpg'}
                   alt={leadMagnet.title}
+                  title={leadMagnet.title}
+                  subtitle="Guide Stratégique Offert"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-80" />

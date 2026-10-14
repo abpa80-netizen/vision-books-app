@@ -66,6 +66,7 @@ interface AppContextType {
   categories: Category[];
   addCategory: (category: Partial<Category>) => Promise<Category>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<Category>;
+  reorderCategories: (orderedIds: string[]) => Promise<void>;
   toggleCategoryStatus: (id: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 
@@ -129,6 +130,24 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+export const sortCategoriesStrategically = (cats: Category[]): Category[] => {
+  return [...cats].sort((a, b) => {
+    // 1. "Autres" category is ALWAYS strictly in last position, unconditionally
+    const isAAutres = a.slug === 'autres' || a.id === 'cat-autres' || a.name?.toLowerCase().trim() === 'autres';
+    const isBAutres = b.slug === 'autres' || b.id === 'cat-autres' || b.name?.toLowerCase().trim() === 'autres';
+    if (isAAutres && !isBAutres) return 1;
+    if (!isAAutres && isBAutres) return -1;
+
+    // 2. By display_order / order if specified
+    const orderA = a.display_order ?? a.order ?? 999;
+    const orderB = b.display_order ?? b.order ?? 999;
+    if (orderA !== orderB) return orderA - orderB;
+
+    // 3. Editorial fallback by created_at or id
+    return (a.created_at || '').localeCompare(b.created_at || '');
+  });
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Sync initial route with window.location.pathname
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -175,7 +194,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { isAdmin } = useAuth();
 
   // State initialized with robust initial data (no localStorage dependency)
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>(() => sortCategoriesStrategically(INITIAL_CATEGORIES));
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
@@ -210,7 +229,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]);
 
       if (dbCats && Array.isArray(dbCats) && dbCats.length > 0) {
-        setCategories(dbCats);
+        setCategories(sortCategoriesStrategically(dbCats));
       }
       if (dbProds && Array.isArray(dbProds) && dbProds.length > 0) {
         setProducts(dbProds);
@@ -251,7 +270,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, isAdmin);
 
     const unsubCats = subscribeCategories((items) => {
-      if (items.length > 0) setCategories(items);
+      if (items.length > 0) setCategories(sortCategoriesStrategically(items));
     }, isAdmin);
 
     const unsubLms = subscribeLeadMagnets((items) => {
@@ -359,12 +378,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
     const catId = categoryData.id || `cat-${slug || Date.now()}`;
+    const calculatedOrder = categoryData.display_order ?? categoryData.order ?? (categories.length + 1);
     const newCat: Category = {
       id: catId,
       name: categoryData.name || '',
       slug: slug || `cat-${Date.now()}`,
       icon: categoryData.icon || '📚',
       description: categoryData.description || '',
+      image: categoryData.image || categoryData.imageUrl || categoryData.cover || '',
+      imageUrl: categoryData.imageUrl || categoryData.image || categoryData.cover || '',
+      cover: categoryData.cover || categoryData.image || categoryData.imageUrl || '',
+      display_order: calculatedOrder,
+      order: calculatedOrder,
       is_active: categoryData.is_active !== false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -384,17 +409,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.debug('[SQLite] Dual-layer sync notice:', sqliteErr);
     }
 
-    setCategories((prev) => [...prev.filter((c) => c.id !== newCat.id), newCat]);
-    showToast(`Catégorie "${newCat.name}" enregistrée dans Firestore.`);
+    setCategories((prev) => sortCategoriesStrategically([...prev.filter((c) => c.id !== newCat.id), newCat]));
+    showToast(`Catégorie "${newCat.name}" enregistrée.`);
     return newCat;
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>): Promise<Category> => {
     const existing = categories.find((c) => c.id === id);
+    const updatedOrder = updates.display_order !== undefined
+      ? updates.display_order
+      : (updates.order !== undefined ? updates.order : existing?.display_order);
+
     const updated: Category = {
       ...(existing || { id, name: '', slug: '', icon: '', description: '', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
       ...updates,
       id,
+      display_order: updatedOrder,
+      order: updatedOrder,
+      image: updates.image !== undefined ? updates.image : (updates.imageUrl !== undefined ? updates.imageUrl : (existing?.image || existing?.imageUrl || '')),
+      imageUrl: updates.imageUrl !== undefined ? updates.imageUrl : (updates.image !== undefined ? updates.image : (existing?.imageUrl || existing?.image || '')),
       updated_at: new Date().toISOString(),
     };
 
@@ -408,9 +441,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await api.updateCategory(id, updates);
     } catch (sqliteErr) {}
 
-    setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
+    setCategories((prev) => sortCategoriesStrategically(prev.map((c) => (c.id === id ? updated : c))));
     showToast(`Catégorie "${updated.name}" mise à jour.`);
     return updated;
+  };
+
+  const reorderCategories = async (orderedIds: string[]): Promise<void> => {
+    const orderMap = new Map<string, number>();
+    orderedIds.forEach((id, index) => {
+      orderMap.set(id, index + 1);
+    });
+
+    const updatedList = categories.map((cat) => {
+      if (orderMap.has(cat.id)) {
+        const newPos = orderMap.get(cat.id)!;
+        return {
+          ...cat,
+          display_order: newPos,
+          order: newPos,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return cat;
+    });
+
+    const sorted = sortCategoriesStrategically(updatedList);
+    setCategories(sorted);
+
+    // 1. Primary: Cloud Firestore persistence
+    try {
+      for (const cat of sorted) {
+        await saveCategoryToFirestore(cat);
+      }
+    } catch (firestoreErr) {
+      console.warn('[Firestore] reorderCategories notice:', firestoreErr);
+    }
+
+    // 2. Secondary: Dual-layer SQLite mirror
+    try {
+      await api.reorderCategories(orderedIds);
+    } catch (sqliteErr) {
+      console.debug('[SQLite] reorderCategories notice:', sqliteErr);
+    }
+
+    showToast("Ordre d'affichage des thématiques sauvegardé.");
   };
 
   const toggleCategoryStatus = async (id: string): Promise<void> => {
@@ -428,7 +502,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await api.toggleCategory(id);
     } catch (sqliteErr) {}
 
-    setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
+    setCategories((prev) => sortCategoriesStrategically(prev.map((c) => (c.id === id ? updated : c))));
     showToast(`Catégorie "${updated.name}" ${updated.is_active ? 'activée' : 'désactivée'}.`);
   };
 
@@ -443,7 +517,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await api.deleteCategory(id);
     } catch (sqliteErr) {}
 
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    setCategories((prev) => sortCategoriesStrategically(prev.filter((c) => c.id !== id)));
     showToast('Catégorie supprimée de Firestore.');
   };
 
@@ -464,7 +538,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       title: productData.title || '',
       author: productData.author || '',
       slug: slug || `prod-${Date.now()}`,
-      cover: productData.cover || '/src/assets/images/cover_business_empire_1790615532791.jpg',
+      cover: productData.cover || '/assets/images/cover_business_empire_1790615532791.jpg',
       category: productData.category || 'business-entrepreneuriat',
       normal_price: productData.normal_price || 29.9,
       sale_price: productData.sale_price !== undefined ? productData.sale_price : null,
@@ -507,7 +581,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       title: updates.title ?? existing?.title ?? '',
       author: updates.author ?? existing?.author ?? '',
       slug: updates.slug ?? existing?.slug ?? '',
-      cover: updates.cover ?? existing?.cover ?? '/src/assets/images/cover_business_empire_1790615532791.jpg',
+      cover: updates.cover ?? existing?.cover ?? '/assets/images/cover_business_empire_1790615532791.jpg',
       category: updates.category ?? existing?.category ?? 'business-entrepreneuriat',
       normal_price: updates.normal_price ?? existing?.normal_price ?? 29.9,
       sale_price: updates.sale_price !== undefined ? updates.sale_price : (existing?.sale_price ?? null),
@@ -709,7 +783,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       author: data.author || 'Équipe Éditoriale VISION BOOKS',
       date: data.date || new Date().toLocaleDateString('fr-FR'),
       readTime: data.readTime || '5 min',
-      imageUrl: data.imageUrl || data.image_url || '/src/assets/images/cover_business_empire_1790615532791.jpg',
+      imageUrl: data.imageUrl || data.image_url || '/assets/images/cover_business_empire_1790615532791.jpg',
       is_published: data.is_published !== false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -982,7 +1056,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: lmData.id || `lm-${Date.now()}`,
       title: lmData.title || '',
       slug: slug || `lm-${Date.now()}`,
-      image: lmData.image || '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+      image: lmData.image || '/assets/images/cover_financial_liberty_1790615544438.jpg',
       description: lmData.description || '',
       benefits: lmData.benefits || [],
       file_url: lmData.file_url || '/downloads/ressource.pdf',
@@ -1142,6 +1216,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         categories,
         addCategory,
         updateCategory,
+        reorderCategories,
         toggleCategoryStatus,
         deleteCategory,
         products,

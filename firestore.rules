@@ -33,19 +33,19 @@ service cloud.firestore {
 
     // 2. Products collection
     match /products/{productId} {
-      allow read: if (resource == null || resource.data.is_active == true) || isAdmin();
+      allow read: if (resource == null || resource.data.get('is_active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
     // 3. Categories collection
     match /categories/{categoryId} {
-      allow read: if (resource == null || resource.data.is_active == true) || isAdmin();
+      allow read: if (resource == null || resource.data.get('is_active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
     // 4. Lead Magnets collection
     match /lead_magnets/{leadMagnetId} {
-      allow read: if (resource == null || resource.data.active == true) || isAdmin();
+      allow read: if (resource == null || resource.data.get('active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
@@ -62,13 +62,13 @@ service cloud.firestore {
 
     // 6. Testimonials collection
     match /testimonials/{testimonialId} {
-      allow read: if (resource == null || resource.data.is_active == true) || isAdmin();
+      allow read: if (resource == null || resource.data.get('is_active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
     // 7. Blog Posts collection
     match /blog_posts/{postId} {
-      allow read: if (resource == null || resource.data.is_published == true) || isAdmin();
+      allow read: if (resource == null || resource.data.get('is_published', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
@@ -87,7 +87,7 @@ service cloud.firestore {
 
     // 10. VIP Packs collection
     match /vip_packs/{vipPackId} {
-      allow read: if (resource == null || resource.data.is_active == true) || isAdmin();
+      allow read: if true;
       allow write: if isAdmin();
     }
   }

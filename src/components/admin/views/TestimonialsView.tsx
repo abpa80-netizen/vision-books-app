@@ -215,17 +215,24 @@ export const TestimonialsView: React.FC = () => {
                     <img
                       src={avatar}
                       alt={t.name}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                        const fallbackEl = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallbackEl) fallbackEl.style.display = 'flex';
+                      }}
                       className="h-9 w-9 rounded-full object-cover border border-amber-500/30 shrink-0"
                     />
-                  ) : (
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-700/20 text-xs font-bold text-amber-400 border border-amber-500/30">
-                      {t.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .slice(0, 2)}
-                    </div>
-                  )}
+                  ) : null}
+                  <div
+                    style={{ display: avatar ? 'none' : 'flex' }}
+                    className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-700/20 text-xs font-bold text-amber-400 border border-amber-500/30"
+                  >
+                    {t.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)}
+                  </div>
 
                   <div className="min-w-0">
                     <div className="truncate text-xs font-bold text-white">{t.name}</div>

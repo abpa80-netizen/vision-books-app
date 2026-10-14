@@ -27,6 +27,7 @@ import { api } from '../../../services/api';
 import { AnalyticsStats } from '../../../types';
 import { trackSiteVisit, trackProductClick, trackWhatsAppClick } from '../../../services/analytics';
 import { getAnalyticsStatsFromFirestore } from '../../../services/firestoreService';
+import { SafeImage } from '../../common/SafeImage';
 
 export const DashboardView: React.FC = () => {
   const { products, categories, leads, leadMagnets, setActiveAdminTab, showToast } = useApp();
@@ -642,13 +643,11 @@ export const DashboardView: React.FC = () => {
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-3">
-                                <img
-                                  src={lm.image || '/src/assets/images/cover_financial_liberty_1790615544438.jpg'}
+                                <SafeImage
+                                  src={lm.image || '/assets/images/cover_financial_liberty_1790615544438.jpg'}
                                   alt={lm.title}
+                                  title={lm.title}
                                   className="h-10 w-8 rounded object-cover shadow-sm bg-neutral-900 shrink-0"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLElement).style.display = 'none';
-                                  }}
                                 />
                                 <div className="min-w-0 max-w-xs">
                                   <h4 className="font-semibold text-white truncate">{lm.title}</h4>
@@ -724,9 +723,11 @@ export const DashboardView: React.FC = () => {
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-[10px] font-bold text-neutral-400">
                       {idx + 1}
                     </span>
-                    <img
+                    <SafeImage
                       src={p.cover}
                       alt={p.title}
+                      title={p.title}
+                      subtitle={p.author}
                       className="h-10 w-7 rounded object-cover shadow-sm bg-neutral-950 shrink-0"
                     />
                     <div className="min-w-0">
@@ -774,9 +775,11 @@ export const DashboardView: React.FC = () => {
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-[10px] font-bold text-emerald-400">
                       {idx + 1}
                     </span>
-                    <img
+                    <SafeImage
                       src={p.cover}
                       alt={p.title}
+                      title={p.title}
+                      subtitle={p.author}
                       className="h-10 w-7 rounded object-cover shadow-sm bg-neutral-950 shrink-0"
                     />
                     <div className="min-w-0">

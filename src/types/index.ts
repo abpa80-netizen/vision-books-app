@@ -4,7 +4,13 @@ export interface Category {
   slug: string;
   icon: string;
   description: string;
+  image?: string;
+  imageUrl?: string;
+  image_url?: string;
+  cover?: string;
   is_active: boolean;
+  display_order?: number;
+  order?: number;
   created_at: string;
   updated_at: string;
   // Optional convenience fields
@@ -31,6 +37,7 @@ export interface Product {
   product_details?: string; // Content / details of the product
   product_url: string;
   is_best_seller: boolean;
+  bestseller_order?: number | null; // Ordre d'affichage dans la section Best-Sellers (1 à 6)
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -91,6 +98,8 @@ export interface BlogPost {
   imageUrl?: string;
   image_url?: string;
   is_published?: boolean;
+  is_featured?: boolean;
+  featured?: boolean;
   created_at?: string;
   updated_at?: string;
 }

@@ -34,6 +34,8 @@ import { useApp } from '../../../context/AppContext';
 import { Product, CategorySuggestion } from '../../../types';
 import { api } from '../../../services/api';
 import { ImageUploader } from '../ImageUploader';
+import { SafeImage } from '../../common/SafeImage';
+import { BestSellersOrderModal } from '../BestSellersOrderModal';
 
 export const ProductsView: React.FC = () => {
   const {
@@ -62,7 +64,7 @@ export const ProductsView: React.FC = () => {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [slug, setSlug] = useState('');
-  const [cover, setCover] = useState('/src/assets/images/cover_business_empire_1790615532791.jpg');
+  const [cover, setCover] = useState('/assets/images/cover_business_empire_1790615532791.jpg');
   const [category, setCategory] = useState(categories[0]?.slug || 'business-entrepreneuriat');
   const [normalPrice, setNormalPrice] = useState('49.90');
   const [salePrice, setSalePrice] = useState('29.90');
@@ -97,6 +99,9 @@ export const ProductsView: React.FC = () => {
       showToast(successMsg, 'success');
     }
   };
+
+  // Best-Sellers display order state
+  const [isBestSellersOrderModalOpen, setIsBestSellersOrderModalOpen] = useState(false);
 
   // AI Generator state
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -154,7 +159,7 @@ export const ProductsView: React.FC = () => {
     setTitle('');
     setAuthor('');
     setSlug('');
-    setCover('/src/assets/images/cover_business_empire_1790615532791.jpg');
+    setCover('/assets/images/cover_business_empire_1790615532791.jpg');
     setCategory(categories[0]?.slug || 'business-entrepreneuriat');
     setNormalPrice('49.90');
     setSalePrice('29.90');
@@ -413,13 +418,25 @@ export const ProductsView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-xs font-semibold text-neutral-950 hover:bg-amber-400 transition-colors shadow-sm active:scale-95"
-        >
-          <Plus className="h-4 w-4 stroke-[2.5]" />
-          <span>Ajouter un Produit</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsBestSellersOrderModalOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3.5 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-all shadow-sm active:scale-95"
+            title="Définir et réorganiser les 6 Best-Sellers de la page d'accueil"
+          >
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+            <span>Ordre des Best-Sellers (1 à 6)</span>
+          </button>
+
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-xs font-semibold text-neutral-950 hover:bg-amber-400 transition-colors shadow-sm active:scale-95"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>Ajouter un Produit</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search Toolbar */}
@@ -502,14 +519,12 @@ export const ProductsView: React.FC = () => {
                       {/* Product cover & title */}
                       <td className="py-4 pl-6 pr-3">
                         <div className="flex items-center gap-3">
-                          <img
+                          <SafeImage
                             src={p.cover || p.coverUrl}
                             alt={p.title}
+                            title={p.title}
+                            subtitle={p.author}
                             className="h-14 w-10 shrink-0 rounded object-cover shadow-sm bg-neutral-950"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = 'none';
-                            }}
                           />
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -933,15 +948,15 @@ export const ProductsView: React.FC = () => {
                     {[
                       {
                         label: 'Business',
-                        url: '/src/assets/images/cover_business_empire_1790615532791.jpg',
+                        url: '/assets/images/cover_business_empire_1790615532791.jpg',
                       },
                       {
                         label: 'Finance',
-                        url: '/src/assets/images/cover_financial_liberty_1790615544438.jpg',
+                        url: '/assets/images/cover_financial_liberty_1790615544438.jpg',
                       },
                       {
                         label: 'Mindset',
-                        url: '/src/assets/images/cover_mindset_power_1790615556990.jpg',
+                        url: '/assets/images/cover_mindset_power_1790615556990.jpg',
                       },
                     ].map((preset) => (
                       <button
@@ -1645,6 +1660,12 @@ export const ProductsView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal d'organisation de l'ordre des Best-Sellers (1 à 6) */}
+      <BestSellersOrderModal
+        isOpen={isBestSellersOrderModalOpen}
+        onClose={() => setIsBestSellersOrderModalOpen(false)}
+      />
     </div>
   );
 };

@@ -88,6 +88,16 @@ export const api = {
     return res.json();
   },
 
+  async reorderCategories(orderedIds: string[]): Promise<Category[]> {
+    const res = await fetch('/api/categories/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderedIds }),
+    });
+    if (!res.ok) throw new Error('Erreur lors de la réorganisation des catégories');
+    return res.json();
+  },
+
   // Products
   async getProducts(activeOnly = false, category?: string): Promise<Product[]> {
     const params = new URLSearchParams();

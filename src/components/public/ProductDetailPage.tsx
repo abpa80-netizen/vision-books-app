@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { ProductCard } from './ProductCard';
 import { AudioPreviewModal } from './AudioPreviewModal';
+import { SafeImage } from '../common/SafeImage';
 import {
   ArrowLeft,
   Star,
@@ -340,14 +341,12 @@ ${productUrl}`;
               <div className="lg:col-span-5 flex flex-col gap-6">
                 {/* Grande Couverture */}
                 <div className="group relative aspect-[3/4] w-full overflow-hidden rounded-3xl border-2 border-neutral-800 bg-neutral-900 shadow-2xl shadow-neutral-950">
-                  <img
+                  <SafeImage
                     src={product.cover || product.coverUrl}
                     alt={`Grande couverture audio de ${product.title}`}
+                    title={product.title}
+                    subtitle={product.author}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/20 to-transparent" />
 
