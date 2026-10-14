@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isMasterAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'barkissac80@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    // Public reading is intentional for free lead magnets; only the verified
+    // master administrator may upload, replace or delete these resources.
+    match /lead-magnets/{userId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isMasterAdmin()
+        && request.auth.uid == userId
+        && request.resource.size <= 100 * 1024 * 1024
+        && request.resource.contentType in [
+          'application/pdf',
+          'audio/mpeg',
+          'application/epub+zip',
+          'application/zip',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+      allow delete: if isMasterAdmin() && request.auth.uid == userId;
+    }
+
+    // Default deny for all other files, including paid/private audio paths.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
