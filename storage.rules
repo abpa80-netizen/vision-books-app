@@ -25,6 +25,16 @@ service firebase.storage {
       allow delete: if isMasterAdmin() && request.auth.uid == userId;
     }
 
+    // Public site imagery (covers, categories, testimonials, blog and VIP visuals).
+    match /site-images/{userId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isMasterAdmin()
+        && request.auth.uid == userId
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+      allow delete: if isMasterAdmin() && request.auth.uid == userId;
+    }
+
     // Default deny for all other files, including paid/private audio paths.
     match /{allPaths=**} {
       allow read, write: if false;
