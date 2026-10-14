@@ -117,7 +117,7 @@ export const CommercialAssistant: React.FC = () => {
         role: 'assistant',
         content:
           "Je vous prie de m'excuser, notre service de conseil IA est momentanément ralenti. Vous pouvez échanger directement avec notre équipe humaine sur WhatsApp au " +
-          (settings.whatsapp_number || '+33 6 12 34 56 78') +
+          (settings.whatsapp_number || 'aucun numéro WhatsApp configuré pour le moment') +
           " pour recevoir des conseils personnalisés ou un extrait offert !",
         timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       };
@@ -132,17 +132,35 @@ export const CommercialAssistant: React.FC = () => {
     setInputMessage('');
   };
 
-  const whatsappNumber = settings.whatsapp_number || '+33 6 12 34 56 78';
-  const cleanPhone = whatsappNumber.replace(/[^0-9+]/g, '');
+  const whatsappNumber = settings.whatsapp_number || '';
+  const cleanPhone = whatsappNumber.replace(/\D/g, '');
 
   const openWhatsAppGeneral = () => {
+    if (cleanPhone.length < 8) {
+      setMessages((prev) => [...prev, {
+        id: `config-${Date.now()}`,
+        role: 'assistant',
+        content: "Le contact WhatsApp n’est pas encore configuré. Vous pouvez parcourir le catalogue et ouvrir la fiche du livre qui vous intéresse.",
+        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      }]);
+      return;
+    }
     const text = encodeURIComponent("Bonjour VISION BOOKS, je souhaite avoir des conseils sur vos livres audio.");
-    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${text}`, '_blank');
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
   };
 
   const openWhatsAppProduct = (title: string) => {
+    if (cleanPhone.length < 8) {
+      setMessages((prev) => [...prev, {
+        id: `config-product-${Date.now()}`,
+        role: 'assistant',
+        content: "Le contact WhatsApp n’est pas encore configuré. Ouvrez la fiche du livre pour consulter ses informations.",
+        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      }]);
+      return;
+    }
     const text = encodeURIComponent(`Bonjour VISION BOOKS, je souhaite commander le livre audio « ${title} ».`);
-    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${text}`, '_blank');
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
   };
 
   // Helper to parse simple markdown formatting in assistant responses (bold, links)
