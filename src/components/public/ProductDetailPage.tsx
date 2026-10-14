@@ -156,14 +156,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
 
   // Urgence Marketing configurable
   const isUrgencyActive = useMemo(() => {
-    if (!product?.urgency_active) return false;
-    if (product.urgency_end_date) {
-      const end = new Date(product.urgency_end_date).getTime();
-      if (!isNaN(end) && end < Date.now()) {
-        return false;
-      }
-    }
-    return true;
+    if (!product?.urgency_active || !product.urgency_end_date) return false;
+    const end = new Date(product.urgency_end_date).getTime();
+    return Number.isFinite(end) && end > Date.now();
   }, [product?.urgency_active, product?.urgency_end_date]);
 
   // Format du produit (Livre audio, Ebook, Autre format)
@@ -275,10 +270,10 @@ ${productUrl}`;
     Array.isArray(product.key_points) && product.key_points.length > 0
       ? product.key_points
       : (product.keyTakeaways || [
-          'Maîtrise des principes fondamentaux et stratégies concrètes applicables immédiatement',
-          'Méthodes éprouvées pour débloquer votre plein potentiel professionnel et financier',
-          'Études de cas réelles et retours d’expérience pour éviter les erreurs coûteuses',
-          'Plan d’action par étapes structuré pour implémenter chaque leçon au quotidien',
+          'Découvrez les idées principales et les concepts abordés dans cet ouvrage.',
+          'Identifiez des pistes de réflexion à adapter à votre situation.',
+          'Explorez les thèmes et méthodes présentés par l’auteur.',
+          'Choisissez les enseignements que vous souhaitez approfondir.',
         ]);
 
   return (
@@ -358,7 +353,7 @@ ${productUrl}`;
                       {(product.is_best_seller || product.isBestSeller) ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-neutral-950 shadow-lg">
                           <Award className="h-3.5 w-3.5" />
-                          <span>Best-Seller N°1</span>
+                          <span>Best-Seller</span>
                         </span>
                       ) : (
                         <div />
@@ -384,6 +379,7 @@ ${productUrl}`;
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
                     <button
                       onClick={togglePlayAudio}
+                      disabled={!hasAudioPreview}
                       className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 text-neutral-950 shadow-2xl transition-transform hover:scale-110 active:scale-95"
                       title={isPlaying ? "Mettre en pause" : "Écouter l'extrait audio"}
                     >
@@ -429,7 +425,7 @@ ${productUrl}`;
                       </div>
                     </div>
                     <span className="font-mono text-xs text-amber-400 font-semibold tabular-nums">
-                      {formatTime(currentTime)} / {formatTime(duration)}
+                      {formatTime(currentTime)} / {hasAudioPreview ? formatTime(duration) : '--:--'}
                     </span>
                   </div>
 
