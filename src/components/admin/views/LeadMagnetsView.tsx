@@ -82,7 +82,7 @@ export const LeadMagnetsView: React.FC = () => {
       image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
       description: '',
       benefitsText: 'Guide stratégique complet et prêt à l\'emploi\nModèles mentaux et erreurs à éviter\nTemplate actionnable inclus',
-      file_url: '/downloads/ressource-gratuite.pdf',
+      file_url: '/downloads/guide-visionbooks.txt',
       active: true,
       format: 'ebook',
       topic: '',
@@ -163,6 +163,12 @@ export const LeadMagnetsView: React.FC = () => {
       benefits: benefitsArray,
       file_url: formData.file_url.trim(),
       active: formData.active,
+      format: formData.format,
+      topic: formData.topic.trim(),
+      target_audience: formData.target_audience.trim(),
+      raw_content: formData.raw_content.trim(),
+      hook: formData.hook.trim(),
+      cta_text: formData.cta_text.trim(),
     };
 
     if (editingLm) {
