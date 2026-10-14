@@ -28,14 +28,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   // Urgence Marketing : vérification de l'activation et de la date limite
   const isUrgencyActive = React.useMemo(() => {
-    if (!product.urgency_active) return false;
-    if (product.urgency_end_date) {
-      const end = new Date(product.urgency_end_date).getTime();
-      if (!isNaN(end) && end < Date.now()) {
-        return false; // Expiration automatique
-      }
-    }
-    return true;
+    if (!product.urgency_active || !product.urgency_end_date) return false;
+    const end = new Date(product.urgency_end_date).getTime();
+    return Number.isFinite(end) && end > Date.now();
   }, [product.urgency_active, product.urgency_end_date]);
 
   // Format du produit (Livre audio, Ebook, Autre)
