@@ -476,26 +476,14 @@ app.post(['/api/lead-magnets/:id/download', '/api/lead-magnets/:slug/download'],
 // ----------------------------------------------------
 // 6. UPLOAD HANDLER
 // ----------------------------------------------------
-app.post('/api/upload', (req: Request, res: Response): any => {
-  try {
-    const { filename, data } = req.body;
-    if (!data) {
-      return res.status(400).json({ error: 'Aucune donnée fournie pour le téléversement.' });
-    }
-    // Return structured URL: data is stored as Base64 Data URL for Firestore document persistence
-    return res.json({
-      url: data,
-      filename: filename || `asset-${Date.now()}`,
-      size: data.length,
-      success: true,
-      storageType: 'data_url',
-      note: 'Fichier conservé au format Data URL (Base64) pour persistance dans Firestore.',
-    });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Erreur lors du téléversement.' });
+app.post('/api/upload', async (req: Request, res: Response): Promise<any> => {
+  if (!(await isAuthorizedAdmin(req))) {
+    return res.status(401).json({ error: 'Accès non autorisé.' });
   }
+  return res.status(410).json({
+    error: 'Cette ancienne route Base64 est désactivée. Le téléversement utilise désormais Firebase Storage.',
+  });
 });
-
 // ----------------------------------------------------
 // 7. DOWNLOAD GUIDE HANDLER
 // ----------------------------------------------------
