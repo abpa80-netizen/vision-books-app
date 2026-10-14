@@ -78,7 +78,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Audio source URL
-  const audioSrc = product?.audio_url || product?.audioPreviewUrl || 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg';
+  const rawAudioSrc = product?.audio_url || product?.audioPreviewUrl || '';
+  const audioSrc = rawAudioSrc.includes('coffee_shop.ogg') ? '' : rawAudioSrc;
+  const hasAudioPreview = Boolean(audioSrc);
 
   useEffect(() => {
     // Reset audio state when product changes
@@ -98,7 +100,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
   }, [product?.id, product?.slug]);
 
   const togglePlayAudio = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !audioSrc) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -107,7 +109,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
         setIsPlaying(true);
       }).catch((e) => {
         console.warn('Audio play prevented:', e);
-        setIsPlaying(true); // fallback visual feedback
+        setIsPlaying(false);
       });
     }
   };
@@ -286,10 +288,10 @@ ${productUrl}`;
       {/* Hidden audio element for in-page playback */}
       <audio
         ref={audioRef}
-        src={audioSrc}
+        src={audioSrc || undefined}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}
-        preload="metadata"
+        preload={audioSrc ? "metadata" : "none"}
       />
 
       <main className="flex-1 pb-24 sm:pb-32">
@@ -422,8 +424,8 @@ ${productUrl}`;
                         <Headphones className="h-4 w-4" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white">Extrait Audio Disponible</div>
-                        <div className="text-[10px] text-neutral-400">Mastering studio HD • Écoute immédiate</div>
+                        <div className="text-xs font-bold text-white">{hasAudioPreview ? "Extrait audio disponible" : "Extrait audio non disponible"}</div>
+                        <div className="text-[10px] text-neutral-400">{hasAudioPreview ? "Extrait audio • Écoute immédiate" : "Consultez la fiche pour découvrir le contenu du livre."}</div>
                       </div>
                     </div>
                     <span className="font-mono text-xs text-amber-400 font-semibold tabular-nums">
@@ -439,6 +441,7 @@ ${productUrl}`;
                       max={duration || 120}
                       value={currentTime}
                       onChange={handleSeek}
+                      disabled={!hasAudioPreview}
                       className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
                     />
                   </div>
@@ -448,6 +451,7 @@ ${productUrl}`;
                     <div className="flex items-center gap-3">
                       <button
                         onClick={togglePlayAudio}
+                        disabled={!hasAudioPreview}
                         className="flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-neutral-950 transition-all hover:bg-amber-400 active:scale-95 shadow-sm"
                       >
                         {isPlaying ? (
@@ -472,6 +476,7 @@ ${productUrl}`;
                     </div>
 
                     <button
+                      disabled={!hasAudioPreview}
                       onClick={() => {
                         if (audioRef.current) {
                           audioRef.current.muted = !isMuted;
