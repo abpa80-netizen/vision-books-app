@@ -923,7 +923,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     const lm = leadMagnets.find((m) => m.id === leadMagnetId);
-    let downloadUrl = lm?.file_url || lm?.download_url || '/downloads/guide-visionbooks.pdf';
+    let downloadUrl = lm?.file_url || lm?.download_url || '/downloads/guide-visionbooks.txt';
+    if (downloadUrl.startsWith('/downloads/') && downloadUrl.toLowerCase().endsWith('.pdf')) {
+      downloadUrl = downloadUrl.replace(/\.pdf$/i, '.txt');
+    }
     const leadMagnetTitle = lm?.title || leadData.lead_magnet_title || 'Guide offert';
 
     if (existingDup) {
