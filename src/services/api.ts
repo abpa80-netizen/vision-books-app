@@ -370,6 +370,8 @@ export const api = {
     whatsapp: string;
     lead_magnet_id?: string | null;
     lead_magnet_title?: string;
+    lead_magnet_content?: string;
+    recommended_product?: { id: string; title: string; author?: string; slug: string; normal_price?: number; sale_price?: number | null; audio_preview_available?: boolean } | null;
     lead_id?: string;
     step?: 'J1' | 'J2' | 'J3' | 'all';
   }): Promise<{
