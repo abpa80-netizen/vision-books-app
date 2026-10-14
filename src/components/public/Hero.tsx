@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Volume2, Shield, ArrowRight } from 'lucide-react';
+import { Play, Volume2, Shield, ArrowRight, BookOpen } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { SafeImage } from '../common/SafeImage';
 
@@ -37,25 +37,28 @@ export const Hero: React.FC = () => {
               <strong className="text-white font-semibold">VISION BOOKS</strong> transforme le temps perdu de vos trajets et séances de sport en levier de croissance stratégique. Accédez aux synthèses et livres audio les plus percutants en Business, Finance, Mindset et Investissement, enregistrés par des voix de studio d'élite.
             </p>
 
-            {/* Quick Proof Metrics adjacent to hero claims */}
-            <div className="mt-8 grid grid-cols-3 gap-6 border-y border-neutral-800 py-6">
-              <div>
-                <div className="font-display text-2xl font-bold tabular-nums text-white lg:text-3xl">
-                  250+
+            {/* Promesses éditoriales vérifiables, sans statistiques non confirmées */}
+            <div className="mt-8 grid grid-cols-1 gap-3 border-y border-neutral-800 py-5 sm:grid-cols-3 sm:gap-5">
+              <div className="flex items-start gap-2.5">
+                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <div>
+                  <div className="text-sm font-semibold text-white">Sans abonnement</div>
+                  <div className="mt-1 text-xs leading-relaxed text-neutral-400">Achetez les titres qui correspondent à vos objectifs.</div>
                 </div>
-                <div className="mt-1 text-xs text-neutral-400">Heures d'écoute studio</div>
               </div>
-              <div>
-                <div className="font-display text-2xl font-bold tabular-nums text-white lg:text-3xl">
-                  98.4%
+              <div className="flex items-start gap-2.5">
+                <Volume2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <div>
+                  <div className="text-sm font-semibold text-white">Écoute à vie</div>
+                  <div className="mt-1 text-xs leading-relaxed text-neutral-400">Accès durable après achat, selon les conditions de chaque titre.</div>
                 </div>
-                <div className="mt-1 text-xs text-neutral-400">Taux de satisfaction</div>
               </div>
-              <div>
-                <div className="font-display text-2xl font-bold tabular-nums text-white lg:text-3xl">
-                  100%
+              <div className="flex items-start gap-2.5">
+                <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <div>
+                  <div className="text-sm font-semibold text-white">Choix par objectif</div>
+                  <div className="mt-1 text-xs leading-relaxed text-neutral-400">Explorez le business, la finance, le mindset et plus encore.</div>
                 </div>
-                <div className="mt-1 text-xs text-neutral-400">Synthèses actionnables</div>
               </div>
             </div>
 
@@ -83,7 +86,7 @@ export const Hero: React.FC = () => {
             {/* Guarantee note */}
             <div className="mt-4 flex items-center gap-2 text-xs text-neutral-400">
               <Shield className="h-3.5 w-3.5 text-amber-500" />
-              <span>Qualité audio masterisée sans compression destructive. Écoute hors-ligne garantie.</span>
+              <span>Accès à vie après achat, sans abonnement. Consultez chaque fiche pour connaître le format et les conditions d’accès.</span>
             </div>
           </div>
 
