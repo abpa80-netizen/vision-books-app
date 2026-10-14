@@ -507,7 +507,7 @@ export const INITIAL_LEAD_MAGNETS: LeadMagnet[] = [
       'La matrice infaillible d\'élimination de la dette en 90 jours',
       'Fiche mémo et template Excel de suivi de trésorerie inclus'
     ],
-    file_url: '/downloads/guide-liberte-financiere-visionbooks.pdf',
+    file_url: '/downloads/guide-liberte-financiere-visionbooks.txt',
     active: true,
     created_at: '2026-09-20T10:00:00.000Z',
     downloads_count: 1420,
