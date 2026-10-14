@@ -31,6 +31,7 @@ import {
 import { Product } from '../../types';
 import { api } from '../../services/api';
 import { trackProductView, trackWhatsAppClick } from '../../services/analytics';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 interface ProductDetailPageProps {
   slug: string;
@@ -187,7 +188,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
       }
     }
 
-    const cleanPhone = (rawPhone || '').replace(/[^0-9]/g, '');
+    const cleanPhone = normalizeBusinessWhatsApp(rawPhone);
     if (!cleanPhone) {
       showToast('Le numéro WhatsApp de commande n\'est pas encore configuré dans les paramètres.', 'error');
       return;
