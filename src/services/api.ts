@@ -38,8 +38,9 @@ export const api = {
       zip: 'application/zip',
       docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     };
-    const contentType = file.type || mimeByExtension[extension] || 'application/octet-stream';
     const allowedTypes = Object.values(mimeByExtension);
+    const detectedType = file.type || 'application/octet-stream';
+    const contentType = allowedTypes.includes(detectedType) ? detectedType : (mimeByExtension[extension] || detectedType);
     if (!allowedTypes.includes(contentType)) {
       throw new Error("Format non pris en charge. Utilisez PDF, MP3, EPUB, ZIP ou DOCX.");
     }
