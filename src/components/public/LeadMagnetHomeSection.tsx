@@ -164,7 +164,7 @@ export const LeadMagnetHomeSection: React.FC = () => {
         res.download_url ||
         activeMagnet.file_url ||
         activeMagnet.download_url ||
-        '/downloads/guide-visionbooks.pdf';
+        '/downloads/guide-visionbooks.txt';
 
       trackLeadMagnetDownload(whatsapp.trim(), '/');
 
