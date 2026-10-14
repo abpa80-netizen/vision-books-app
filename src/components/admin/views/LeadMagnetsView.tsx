@@ -51,7 +51,7 @@ export const LeadMagnetsView: React.FC = () => {
     image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
     description: '',
     benefitsText: '',
-    file_url: '/downloads/guide-visionbooks.pdf',
+    file_url: '/downloads/guide-visionbooks.txt',
     active: true,
     format: 'ebook' as 'ebook' | 'audiobook' | 'other',
     topic: '',
