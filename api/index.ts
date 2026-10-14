@@ -536,7 +536,7 @@ Visitez notre catalogue officiel :
 👉 https://vision-books.vercel.app
 
 Pour toute question ou commande assistée sur WhatsApp :
-👉 Contactez notre conciergerie privée au +33 6 12 34 56 78
+👉 Utilisez le numéro WhatsApp affiché sur le site pour contacter notre équipe
 
 VISION BOOKS — L'excellence audio pour les esprits ambitieux.
 ================================================================================`);
