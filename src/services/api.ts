@@ -1,5 +1,6 @@
 import { Category, Product, VipPack, Lead, LeadMagnetMarketingContent, CategorySuggestion } from '../types';
-import { auth } from '../lib/firebase';
+import { auth, storage } from '../lib/firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
@@ -21,30 +22,44 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 export const api = {
   // File / Image upload
   async uploadFile(file: File): Promise<{ url: string; filename: string; size: number }> {
-    const base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filename: file.name,
-        type: file.type,
-        data: base64,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Erreur lors du téléversement' }));
-      throw new Error(err.error || 'Erreur lors du téléversement');
+    const user = auth.currentUser;
+    if (!user || user.email?.toLowerCase() !== 'barkissac80@gmail.com' || !user.emailVerified) {
+      throw new Error("Connectez-vous avec le compte administrateur vérifié pour téléverser une ressource.");
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      throw new Error("Le fichier dépasse la limite de 100 Mo.");
     }
 
-    return res.json();
-  },
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const mimeByExtension: Record<string, string> = {
+      pdf: 'application/pdf',
+      mp3: 'audio/mpeg',
+      epub: 'application/epub+zip',
+      zip: 'application/zip',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    };
+    const contentType = file.type || mimeByExtension[extension] || 'application/octet-stream';
+    const allowedTypes = Object.values(mimeByExtension);
+    if (!allowedTypes.includes(contentType)) {
+      throw new Error("Format non pris en charge. Utilisez PDF, MP3, EPUB, ZIP ou DOCX.");
+    }
+
+    const safeName = file.name
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(-100) || 'ressource';
+    const objectPath = `lead-magnets/${user.uid}/${Date.now()}-${safeName}`;
+    const objectRef = ref(storage, objectPath);
+    const uploaded = await uploadBytes(objectRef, file, {
+      contentType,
+      customMetadata: { uploadedBy: user.uid },
+    });
+    const url = await getDownloadURL(uploaded.ref);
+
+    return { url, filename: safeName, size: file.size };
+  }
   // Categories
   async getCategories(activeOnly = false): Promise<Category[]> {
     const res = await fetch(`/api/categories${activeOnly ? '?active_only=true' : ''}`);
