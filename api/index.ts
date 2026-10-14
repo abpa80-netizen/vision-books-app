@@ -326,16 +326,16 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
 
     // Standard high-converting recommended product for sequence conclusion
     const recommendedProduct = {
-      title: "un livre audio adapté à votre objectif",
+      title: "Catalogue de livres audio",
       author: "VISION BOOKS",
       slug: "",
-      price: "au tarif affiché sur la fiche du livre",
+      price: "voir les tarifs sur chaque fiche produit",
     };
 
     let sequence = {
       j1: `Bonjour ${cleanName} ! 🎧 C'est l'équipe VISION BOOKS. Avez-vous pu télécharger et consulter « ${cleanGuide} » ? La clé réside dans l'application immédiate d'un principe fort dès les premières 24h. Je reste à votre disposition si vous souhaitez échanger !`,
       j2: `Hello ${cleanName}, je pensais à une situation concrète ce matin : beaucoup d'entrepreneurs stagnent en appliquant d'anciens réflexes. C'est exactement le blocage que nous dépassons dans « ${cleanGuide} ». Quel est votre principal axe de travail cette semaine ? 💡`,
-      j3: `${cleanName}, pour aller plus loin que les principes condensés dans votre guide, notre masterclass audio intégrale « ${recommendedProduct.title} » par ${recommendedProduct.author} est disponible au tarif préférentiel de ${recommendedProduct.price}. Vous pouvez écouter un premier extrait offert ou commander directement en répondant à ce message ! 🎧📚`,
+      j3: `${cleanName}, si vous souhaitez approfondir les idées de votre guide, consultez le catalogue VISION BOOKS et choisissez un livre audio correspondant à votre objectif. Si vous hésitez entre plusieurs titres, répondez à ce message : nous vous aiderons à comparer les contenus et les tarifs indiqués sur les fiches. 🎧📚`,
       generated_at: new Date().toISOString(),
     };
 
@@ -360,7 +360,7 @@ Ressource téléchargée : "${cleanGuide}"
 Format JSON STRICT : { "j2": "texte du message avec 1 ou 2 emojis" }`;
         } else if (step === 'J3') {
           prompt = `Tu es l'expert en relation client de VISION BOOKS.
-Rédige UNIQUEMENT le message WhatsApp de relance J3 (Transition vers la masterclass audio « ${recommendedProduct.title} » à ${recommendedProduct.price}) pour ce prospect :
+Rédige UNIQUEMENT le message WhatsApp de relance J3 : invite poliment à consulter le catalogue VISION BOOKS et à choisir un titre selon son objectif. N’invente ni titre ni prix.
 Prénom : "${cleanName}"
 Ressource téléchargée : "${cleanGuide}"
 Format JSON STRICT : { "j3": "texte du message avec invitation courtoise sur WhatsApp" }`;
@@ -369,13 +369,13 @@ Format JSON STRICT : { "j3": "texte du message avec invitation courtoise sur Wha
 Rédige 3 messages WhatsApp de relance personnalisés et courtois pour un prospect ayant téléchargé un guide :
 Prénom du prospect : "${cleanName}"
 Guide téléchargé : "${cleanGuide}"
-Livre recommandé pour J3 : « ${recommendedProduct.title} » par ${recommendedProduct.author} (${recommendedProduct.price})
+Objectif de J3 : inviter à consulter le catalogue réel, sans inventer de titre, d’auteur ou de prix.
 
 Format JSON STRICT :
 {
   "j1": "Message WhatsApp à J+1 (Valeur, vérification de bonne réception, question ouverte bienveillante)",
   "j2": "Message WhatsApp à J+2 (Prise de conscience, anecdote ou conseil stratégique sans vente)",
-  "j3": "Message WhatsApp à J+3 (Recommandation du livre audio « ${recommendedProduct.title} » et invitation sur WhatsApp)"
+  "j3": "Message WhatsApp à J+3 (invitation à consulter le catalogue et à comparer les tarifs affichés)"
 }`;
         }
 
