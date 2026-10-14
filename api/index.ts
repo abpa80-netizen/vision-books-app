@@ -329,22 +329,33 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
   }
 
   try {
-    const { lead_id, first_name, whatsapp, lead_magnet_id, lead_magnet_title, step } = req.body;
+    const { lead_id, first_name, whatsapp, lead_magnet_id, lead_magnet_title, lead_magnet_content, recommended_product, step } = req.body;
     const cleanName = first_name ? String(first_name).trim() : 'Cher lecteur';
     const cleanGuide = lead_magnet_title ? String(lead_magnet_title).trim() : 'notre guide stratégique offert';
-
-    // Standard high-converting recommended product for sequence conclusion
-    const recommendedProduct = {
-      title: "Catalogue de livres audio",
-      author: "VISION BOOKS",
-      slug: "",
-      price: "voir les tarifs sur chaque fiche produit",
-    };
+    const guideContext = typeof lead_magnet_content === 'string' ? lead_magnet_content.slice(0, 5000) : '';
+    const selectedProduct = recommended_product && typeof recommended_product === 'object' && recommended_product.slug && recommended_product.title
+      ? recommended_product
+      : null;
+    const productUrl = selectedProduct ? `https://vision-books.vercel.app/produit/${encodeURIComponent(String(selectedProduct.slug))}` : 'https://vision-books.vercel.app/catalogue';
+    const productPrice = selectedProduct
+      ? (Number.isFinite(Number(selectedProduct.sale_price)) && Number(selectedProduct.sale_price) > 0 && Number(selectedProduct.sale_price) < Number(selectedProduct.normal_price)
+          ? `${selectedProduct.sale_price} € (au lieu de ${selectedProduct.normal_price} €)`
+          : (Number.isFinite(Number(selectedProduct.normal_price)) && Number(selectedProduct.normal_price) > 0 ? `${selectedProduct.normal_price} €` : 'prix indiqué sur la fiche'))
+      : 'prix indiqué sur chaque fiche';
+    const recommendedProduct = selectedProduct ? {
+      title: String(selectedProduct.title),
+      author: String(selectedProduct.author || ''),
+      url: productUrl,
+      price: productPrice,
+      audio_preview_available: selectedProduct.audio_preview_available === true,
+    } : { title: 'Catalogue de livres audio', author: 'VISION BOOKS', url: 'https://vision-books.vercel.app/catalogue', price: 'voir les tarifs sur chaque fiche', audio_preview_available: false };
 
     let sequence = {
       j1: `Bonjour ${cleanName} ! 🎧 C'est l'équipe VISION BOOKS. Avez-vous pu télécharger et consulter « ${cleanGuide} » ? La clé réside dans l'application immédiate d'un principe fort dès les premières 24h. Je reste à votre disposition si vous souhaitez échanger !`,
       j2: `Hello ${cleanName}, je pensais à une situation concrète ce matin : beaucoup d'entrepreneurs stagnent en appliquant d'anciens réflexes. C'est exactement le blocage que nous dépassons dans « ${cleanGuide} ». Quel est votre principal axe de travail cette semaine ? 💡`,
-      j3: `${cleanName}, si vous souhaitez approfondir les idées de votre guide, consultez le catalogue VISION BOOKS et choisissez un livre audio correspondant à votre objectif. Si vous hésitez entre plusieurs titres, répondez à ce message : nous vous aiderons à comparer les contenus et les tarifs indiqués sur les fiches. 🎧📚`,
+      j3: selectedProduct
+        ? `${cleanName}, pour prolonger les idées de « ${cleanGuide} », je vous recommande de découvrir « ${selectedProduct.title} » de ${selectedProduct.author || 'VISION BOOKS'}. Vous trouverez sa présentation, son tarif et${selectedProduct.audio_preview_available ? ' un extrait audio à écouter' : ' les informations de contenu'} ici : ${productUrl}. Prenez le temps de voir si ce contenu correspond à votre objectif ; si vous le souhaitez, répondez-moi et je vous aiderai à faire le bon choix. 🎧📚`
+        : `${cleanName}, pour prolonger les idées de « ${cleanGuide} », voici le catalogue VISION BOOKS : ${productUrl}. Choisissez le titre le plus adapté à votre objectif et répondez-moi si vous souhaitez de l’aide pour comparer les contenus. 🎧📚`,
       generated_at: new Date().toISOString(),
     };
 
@@ -360,25 +371,33 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
 Rédige UNIQUEMENT le message WhatsApp de relance J1 (Valeur et éducation, sans vente directe) pour ce prospect :
 Prénom : "${cleanName}"
 Ressource téléchargée : "${cleanGuide}"
+Contenu réel du guide : "${guideContext}"
+Le message doit vérifier la réception de ce guide et donner une action concrète liée à son sujet, sans inventer de contenu absent.
 Format JSON STRICT : { "j1": "texte du message avec 1 ou 2 emojis" }`;
         } else if (step === 'J2') {
           prompt = `Tu es l'expert en relation client de VISION BOOKS.
 Rédige UNIQUEMENT le message WhatsApp de relance J2 (Histoire/mise en situation et prise de conscience, sans vente directe) pour ce prospect :
 Prénom : "${cleanName}"
 Ressource téléchargée : "${cleanGuide}"
+Contenu réel du guide : "${guideContext}"
+Le message doit apporter un conseil complémentaire lié à ce guide, poser une question ouverte et ne pas inventer d'exemple présenté comme réel.
 Format JSON STRICT : { "j2": "texte du message avec 1 ou 2 emojis" }`;
         } else if (step === 'J3') {
           prompt = `Tu es l'expert en relation client de VISION BOOKS.
-Rédige UNIQUEMENT le message WhatsApp de relance J3 : invite poliment à consulter le catalogue VISION BOOKS et à choisir un titre selon son objectif. N’invente ni titre ni prix.
+Rédige UNIQUEMENT le message WhatsApp J3. Fais le lien avec le guide réellement téléchargé, apporte une dernière valeur utile, puis présente le livre sélectionné ci-dessous avec son lien exact et son prix fourni. Invite le prospect à consulter sa fiche et à écouter l'extrait si disponible. N'invente aucun titre, prix, lien ou bonus.
 Prénom : "${cleanName}"
 Ressource téléchargée : "${cleanGuide}"
-Format JSON STRICT : { "j3": "texte du message avec invitation courtoise sur WhatsApp" }`;
+Contenu réel du guide : "${guideContext}"
+Livre sélectionné : ${JSON.stringify(recommendedProduct)}
+Format JSON STRICT : { "j3": "message WhatsApp personnalisé avec URL complète" }`;
         } else {
           prompt = `Tu es l'expert en relation client de VISION BOOKS (https://vision-books.vercel.app).
-Rédige 3 messages WhatsApp de relance personnalisés et courtois pour un prospect ayant téléchargé un guide :
+Rédige 3 messages WhatsApp personnalisés pour un prospect ayant téléchargé cette ressource :
 Prénom du prospect : "${cleanName}"
 Guide téléchargé : "${cleanGuide}"
-Objectif de J3 : inviter à consulter le catalogue réel, sans inventer de titre, d’auteur ou de prix.
+Contenu réel du guide : "${guideContext}"
+Livre sélectionné pour J3 : ${JSON.stringify(recommendedProduct)}
+J1 confirme la réception et donne une action liée au guide ; J2 apporte un conseil complémentaire précis et pose une question ; J3 apporte une dernière valeur puis présente le livre sélectionné avec son URL exacte, son prix fourni et une invitation à écouter l'extrait audio si disponible. Ne fabrique aucune information.
 
 Format JSON STRICT :
 {
