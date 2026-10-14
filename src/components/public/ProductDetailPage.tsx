@@ -7,7 +7,6 @@ import { AudioPreviewModal } from './AudioPreviewModal';
 import { SafeImage } from '../common/SafeImage';
 import {
   ArrowLeft,
-  Star,
   CheckCircle2,
   Gift,
   Headphones,
@@ -527,15 +526,7 @@ ${productUrl}`;
                     </a>
                   )}
 
-                  {/* Rating Score */}
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-300">
-                    <div className="flex text-amber-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                    <span className="font-semibold text-neutral-300">Évaluation du contenu</span>
-                  </div>
+
                 </div>
 
                 {/* Grand Titre */}
