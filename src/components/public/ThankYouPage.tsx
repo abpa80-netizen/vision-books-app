@@ -12,10 +12,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { trackLeadMagnetDownload } from '../../services/analytics';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 export const ThankYouPage: React.FC = () => {
   const { navigateTo, settings } = useApp();
-  const whatsappPhone = (settings?.whatsapp_number || '').replace(/[^0-9]/g, '');
+  const whatsappPhone = normalizeBusinessWhatsApp(settings?.whatsapp_number);
 
   const [leadInfo, setLeadInfo] = useState<{
     firstName?: string;
