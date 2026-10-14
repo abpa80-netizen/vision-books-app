@@ -131,7 +131,7 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
 
     try {
       const lmId = leadMagnet?.id || null;
-      const downloadPath = leadMagnet?.file_url || `/downloads/${leadMagnet?.slug || 'guide'}.pdf`;
+      const downloadPath = leadMagnet?.file_url || `/downloads/${leadMagnet?.slug || 'guide'}.txt`;
 
       // 1. Enregistrer le prospect
       const res = await addLead({
@@ -151,7 +151,8 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
       try {
         const link = document.createElement('a');
         link.href = effectiveDownloadUrl;
-        link.download = `${(leadMagnet?.slug || 'guide-visionbooks')}.pdf`;
+        const downloadExtension = effectiveDownloadUrl.split('?')[0].match(/\.(pdf|mp3|epub|zip|docx|txt)$/i)?.[1] || 'txt';
+        link.download = `${(leadMagnet?.slug || 'guide-visionbooks')}.${downloadExtension}`;
         link.target = '_blank';
         document.body.appendChild(link);
         link.click();
