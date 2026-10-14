@@ -47,8 +47,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
-      setErrorMessage('L\'image dépasse la taille maximale autorisée (25 Mo).');
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('L\'image dépasse la taille maximale autorisée (5 Mo).');
       return;
     }
 
