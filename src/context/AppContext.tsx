@@ -38,6 +38,7 @@ import {
   saveVipPackToFirestore,
   deleteVipPackFromFirestore,
   seedFirestoreIfEmpty,
+  migrateLegacyProductAudioUrls,
 } from '../services/firestoreService';
 
 interface Toast {
@@ -262,7 +263,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // FIRESTORE REAL-TIME SYNCHRONIZATION & PERSISTENCE
   useEffect(() => {
     // 1. Ensure Firestore is seeded with default documents if empty
-    seedFirestoreIfEmpty().catch((err) => console.warn('Firestore seed check:', err));
+    seedFirestoreIfEmpty()
+      .then(async () => {
+        if (!isAdmin) return;
+        try {
+          const result = await migrateLegacyProductAudioUrls();
+          if (result.migrated > 0) {
+            console.info(`[Firestore] Product privacy migration complete: ${result.migrated} products, ${result.privateUrlsMoved} private URLs moved.`);
+          }
+        } catch (migrationError) {
+          console.error('[Firestore] Product privacy migration did not complete. Publish the updated Firestore rules, then reopen admin.', migrationError);
+        }
+      })
+      .catch((err) => console.warn('Firestore seed check:', err));
 
     // 2. Real-time Firestore Listeners
     const unsubProds = subscribeProducts((items) => {
