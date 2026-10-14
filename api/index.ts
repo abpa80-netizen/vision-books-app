@@ -100,6 +100,8 @@ app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any
     }
 
     const lastMessage = messages[messages.length - 1]?.content || '';
+    const configuredPhoneDigits = typeof whatsappNumber === 'string' ? whatsappNumber.replace(/\\D/g, '') : '';
+    const hasConfiguredWhatsApp = configuredPhoneDigits.length >= 8 && !['33612345678', '22990000000'].includes(configuredPhoneDigits);
     let reply = '';
 
     // Attempt Gemini call if API key configured
@@ -121,7 +123,7 @@ RÈGLES IMPÉRATIVES :
 
 Catalogue public disponible : ${JSON.stringify(safeCatalogue)}
 Pack VIP actif : ${hasActiveVipPack === true ? 'oui' : 'non'}.
-WhatsApp configuré : ${typeof whatsappNumber === 'string' && whatsappNumber.replace(/\\D/g, '').length >= 8 ? 'oui' : 'non'}.`;
+WhatsApp configuré : ${hasConfiguredWhatsApp ? 'oui' : 'non'}.`;
 
         const response = await ai.models.generateContent({
           model: 'gemini-3.8-flash',
@@ -143,9 +145,7 @@ WhatsApp configuré : ${typeof whatsappNumber === 'string' && whatsappNumber.rep
 
     // High quality deterministic fallback if API key absent or quota exceeded
     if (!reply) {
-      reply = `Bienvenue chez VISION BOOKS. Nos masterclasses audio sont spécialement conçues pour les dirigeants et visionnaires en quête d'excellence. 
-
-Pour accélérer vos résultats, je vous invite à consulter notre catalogue complet ou à échanger directement avec notre conciergerie privée sur WhatsApp pour une sélection personnalisée. N'hésitez pas également à télécharger nos guides stratégiques offerts !`;
+      reply = 'Bienvenue chez VISION BOOKS. Je peux vous aider à trouver un livre audio selon votre objectif : business, finance, investissement ou développement personnel.\n\nConsultez le catalogue pour découvrir les titres réellement disponibles. ' + (hasConfiguredWhatsApp ? 'Vous pouvez aussi utiliser le bouton WhatsApp du site pour demander conseil à notre équipe.' : 'Le contact WhatsApp n’est pas configuré pour le moment ; vous pouvez consulter les fiches des livres pour choisir en toute autonomie.');
     }
 
     return res.json({
