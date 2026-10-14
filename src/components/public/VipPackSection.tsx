@@ -15,14 +15,9 @@ export const VipPackSection: React.FC = () => {
 
   // Urgence Marketing pour le Pack VIP
   const isUrgencyActive = React.useMemo(() => {
-    if (!vipPack.urgency_active) return false;
-    if (vipPack.urgency_end_date) {
-      const end = new Date(vipPack.urgency_end_date).getTime();
-      if (!isNaN(end) && end < Date.now()) {
-        return false;
-      }
-    }
-    return true;
+    if (!vipPack.urgency_active || !vipPack.urgency_end_date) return false;
+    const end = new Date(vipPack.urgency_end_date).getTime();
+    return Number.isFinite(end) && end > Date.now();
   }, [vipPack.urgency_active, vipPack.urgency_end_date]);
 
   const numNormal = vipPack.normal_price || 0;
