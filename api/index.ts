@@ -174,7 +174,7 @@ app.post('/api/products/generate-ai', async (req: Request, res: Response): Promi
     }
 
     const cleanTitle = title.trim();
-    const cleanAuthor = author ? author.trim() : 'Auteur Référent';
+    const cleanAuthor = author ? author.trim() : 'Auteur non renseigné';
     let resultJson: any = null;
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -187,6 +187,8 @@ Titre: "${cleanTitle}"
 Auteur: "${cleanAuthor}"
 Catégorie souhaitée: "${category || ''}"
 Notes ou contexte additionnel: "${hints || ''}"
+
+Règles de fiabilité : n'invente aucun fait biographique, chiffre, témoignage, certification, résultat garanti, étude de cas réelle ou bonus non fourni dans les notes. Reste convaincant, précis et honnête ; si une information manque, décris les thèmes possibles sans la présenter comme un fait.
 
 Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
 {
@@ -217,15 +219,15 @@ Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
     // High quality deterministic fallback
     if (!resultJson) {
       resultJson = {
-        short_description: `Une masterclass audio indispensable de ${cleanAuthor} pour maîtriser les leviers stratégiques et concrétiser vos ambitions professionnelles.`,
-        full_description: `Découvrez des modèles mentaux et des principes utiles pour réfléchir aux décisions professionnelles de transformer leur vision en réalité pérenne.\n\nDans cet ouvrage audio immersif, ${cleanAuthor} décortique avec méthode les mécanismes indispensables pour surmonter les obstacles opérationnels et bâtir des résultats durables.\n\nChaque chapitre est articulé autour d'exemples concrets, directement applicables dans votre quotidien stratégique.`,
+        short_description: `Découvrez les thèmes et les idées de « ${cleanTitle} » dans une présentation destinée aux personnes qui souhaitent approfondir leurs connaissances.`,
+        full_description: `Explorez les idées principales de « ${cleanTitle} » et les questions qu'il invite à examiner.\n\nCette présentation vous aide à comprendre les thèmes abordés et à repérer les enseignements que vous souhaitez approfondir.\n\nConsultez les informations de la fiche produit pour connaître le format, le contenu et les éventuels bonus réellement inclus.`,
         key_points: [
-          `Les modèles de décision infaillibles adoptés par les leaders mondiaux`,
-          `Comment éliminer les frictions d'exécution et décupler votre impact`,
-          `La méthode concrète pour bâtir une trajectoire résiliente et pérenne`,
-          `Exercices pratiques et synthèses audio prêtes à l'emploi`,
+          `Les idées principales présentées dans l’ouvrage`,
+          `Des pistes de réflexion pour vos décisions professionnelles`,
+          `Des thèmes à approfondir selon vos objectifs`,
+          `Un support pour organiser vos notes et prochaines actions`,
         ],
-        bonus: `Fiche mémo exécutive PDF + Plan d'action stratégique sur 30 jours`,
+        bonus: `Bonus à confirmer selon les informations fournies`,
         cta_text: `Commander l'ouvrage de ${cleanAuthor} sur WhatsApp`,
       };
     }
@@ -294,8 +296,8 @@ Réponds STRICTEMENT sous forme de JSON valide :
         benefits: [
           `Une feuille de route limpide à déployer sous 7 jours`,
           `Les erreurs fréquentes à examiner`,
-          `La grille d'audit exclusive réservée aux membres VIP`,
-          `Accès prioritaire aux futures masterclasses audio de VISION BOOKS`,
+          `Des questions pour clarifier vos priorités`,
+          `Une ressource pour organiser votre apprentissage`,
         ],
       };
     }
