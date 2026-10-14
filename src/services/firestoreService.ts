@@ -687,7 +687,7 @@ export async function seedFirestoreIfEmpty(): Promise<void> {
 
       // 7. Seed Default Settings
       const defaultSettings = [
-        { key: 'whatsapp_number', value: '+33612345678' },
+        { key: 'whatsapp_number', value: '' },
         { key: 'whatsapp_welcome_message', value: 'Bonjour, je souhaite commander un livre audio sur VISION BOOKS.' },
         { key: 'site_title', value: 'VISION BOOKS' },
         { key: 'currency', value: 'EUR' },
