@@ -109,6 +109,7 @@ export const CommercialAssistant: React.FC = () => {
           author: product.author,
           slug: product.slug,
           category: product.category,
+          cover: product.cover || product.coverUrl,
           short_description: product.short_description,
           normal_price: product.normal_price,
           sale_price: product.sale_price,
