@@ -67,7 +67,7 @@ export const ThankYouPage: React.FC = () => {
   }, [navigateTo]);
 
   const handleManualDownload = () => {
-    const targetUrl = leadInfo.downloadUrl || '/downloads/guide-visionbooks.pdf';
+    const targetUrl = leadInfo.downloadUrl || '/downloads/guide-visionbooks.txt';
     trackLeadMagnetDownload(leadInfo.whatsapp || 'lead', '/merci');
     const link = document.createElement('a');
     link.href = targetUrl;
@@ -193,7 +193,7 @@ export const ThankYouPage: React.FC = () => {
           {/* Trust Footnote */}
           <div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-neutral-500">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            <span>VISION BOOKS • Téléchargement direct certifié et sécurisé.</span>
+            <span>VISION BOOKS • Ressource gratuite téléchargeable.</span>
           </div>
         </div>
       </main>
