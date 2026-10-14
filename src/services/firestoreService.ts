@@ -5,6 +5,8 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
+  deleteField,
+  updateDoc,
   onSnapshot,
   query,
   where,
@@ -35,6 +37,8 @@ import {
 // Collection names
 export const COLLECTIONS = {
   PRODUCTS: 'products',
+  PUBLIC_PRODUCTS: 'products_public',
+  PRIVATE_PRODUCT_FILES: 'product_private',
   CATEGORIES: 'categories',
   LEAD_MAGNETS: 'lead_magnets',
   LEADS: 'leads',
@@ -58,56 +62,155 @@ function sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<str
 }
 
 // ----------------------------------------------------
-// 1. PRODUCTS
+// 1. PRODUCTS — public data is separated from private download URLs
 // ----------------------------------------------------
 export function subscribeProducts(
   callback: (products: Product[]) => void,
   isAdmin = false
 ): () => void {
-  const colRef = collection(db, COLLECTIONS.PRODUCTS);
-  const q = isAdmin ? colRef : query(colRef, where('is_active', '==', true));
+  if (!isAdmin) {
+    const publicRef = collection(db, COLLECTIONS.PUBLIC_PRODUCTS);
+    const publicQuery = query(publicRef, where('is_active', '==', true));
+    return onSnapshot(
+      publicQuery,
+      (snapshot) => {
+        const items: Product[] = [];
+        snapshot.forEach((d) => {
+          items.push({ id: d.id, ...d.data(), audio_download_url: '' } as Product);
+        });
+        callback(items);
+      },
+      (error) => handleFirestoreError(error, OperationType.GET, COLLECTIONS.PUBLIC_PRODUCTS)
+    );
+  }
 
-  return onSnapshot(
-    q,
+  let adminProducts: Product[] = [];
+  let privateUrls: Record<string, string> = {};
+  let productsReady = false;
+  let privateReady = false;
+  const publish = () => {
+    if (!productsReady || !privateReady) return;
+    callback(adminProducts.map((product) => ({
+      ...product,
+      audio_download_url: privateUrls[product.id] || '',
+    })));
+  };
+
+  const stopProducts = onSnapshot(
+    collection(db, COLLECTIONS.PRODUCTS),
     (snapshot) => {
-      const items: Product[] = [];
-      snapshot.forEach((d) => {
-        const data = d.data();
-        items.push({
-          id: d.id,
-          ...data,
-          // CRITICAL: Ensure private audio download URL is never delivered to public clients
-          audio_download_url: isAdmin ? data.audio_download_url || '' : '',
-        } as Product);
-      });
-      callback(items);
+      adminProducts = [];
+      snapshot.forEach((d) => adminProducts.push({ id: d.id, ...d.data() } as Product));
+      productsReady = true;
+      publish();
     },
-    (error) => {
-      handleFirestoreError(error, OperationType.GET, COLLECTIONS.PRODUCTS);
-    }
+    (error) => handleFirestoreError(error, OperationType.GET, COLLECTIONS.PRODUCTS)
   );
+
+  const stopPrivate = onSnapshot(
+    collection(db, COLLECTIONS.PRIVATE_PRODUCT_FILES),
+    (snapshot) => {
+      privateUrls = {};
+      snapshot.forEach((d) => {
+        const url = d.data().audio_download_url;
+        if (typeof url === 'string' && url) privateUrls[d.id] = url;
+      });
+      privateReady = true;
+      publish();
+    },
+    (error) => handleFirestoreError(error, OperationType.GET, COLLECTIONS.PRIVATE_PRODUCT_FILES)
+  );
+
+  return () => {
+    stopProducts();
+    stopPrivate();
+  };
 }
 
 export async function saveProductToFirestore(product: Product): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.PRODUCTS, product.id);
-  const payload = sanitizeForFirestore({
-    ...product,
+  const { audio_download_url, ...publicData } = product as Product & { audio_download_url?: string };
+  const publicPayload = sanitizeForFirestore({
+    ...publicData,
     updated_at: new Date().toISOString(),
   });
+
   try {
-    await setDoc(docRef, payload, { merge: true });
+    // The admin catalogue never stores the private download URL in its product document.
+    await setDoc(doc(db, COLLECTIONS.PRODUCTS, product.id), publicPayload, { merge: true });
+    // Public visitors read only this sanitized copy.
+    await setDoc(doc(db, COLLECTIONS.PUBLIC_PRODUCTS, product.id), publicPayload, { merge: true });
+
+    const privateRef = doc(db, COLLECTIONS.PRIVATE_PRODUCT_FILES, product.id);
+    if (audio_download_url) {
+      await setDoc(privateRef, {
+        audio_download_url,
+        updated_at: new Date().toISOString(),
+      }, { merge: true });
+    } else {
+      await deleteDoc(privateRef).catch(() => {});
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `${COLLECTIONS.PRODUCTS}/${product.id}`);
   }
 }
 
 export async function deleteProductFromFirestore(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.PRODUCTS, id);
   try {
-    await deleteDoc(docRef);
+    await Promise.all([
+      deleteDoc(doc(db, COLLECTIONS.PRODUCTS, id)),
+      deleteDoc(doc(db, COLLECTIONS.PUBLIC_PRODUCTS, id)),
+      deleteDoc(doc(db, COLLECTIONS.PRIVATE_PRODUCT_FILES, id)),
+    ]);
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `${COLLECTIONS.PRODUCTS}/${id}`);
   }
+}
+
+/**
+ * One-time, idempotent migration for existing products.
+ * Copies public fields into products_public, moves private download URLs into
+ * product_private, then removes the sensitive field from the legacy products doc.
+ * Must be run by the verified administrator after publishing the matching Firestore rules.
+ */
+export async function migrateLegacyProductAudioUrls(): Promise<{ migrated: number; privateUrlsMoved: number }> {
+  const currentUser = auth.currentUser;
+  if (!currentUser || currentUser.email?.toLowerCase() !== 'barkissac80@gmail.com' || !currentUser.emailVerified) {
+    throw new Error('Seul le compte administrateur vérifié peut lancer la migration.');
+  }
+
+  const snapshot = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
+  let migrated = 0;
+  let privateUrlsMoved = 0;
+
+  for (const productDoc of snapshot.docs) {
+    const data = productDoc.data();
+    const audioUrl = typeof data.audio_download_url === 'string' ? data.audio_download_url : '';
+    const publicData: Record<string, any> = { ...data };
+    delete publicData.audio_download_url;
+
+    if (audioUrl) {
+      await setDoc(doc(db, COLLECTIONS.PRIVATE_PRODUCT_FILES, productDoc.id), {
+        audio_download_url: audioUrl,
+        updated_at: new Date().toISOString(),
+      }, { merge: true });
+      privateUrlsMoved += 1;
+    }
+
+    await setDoc(doc(db, COLLECTIONS.PUBLIC_PRODUCTS, productDoc.id), {
+      ...sanitizeForFirestore(publicData),
+      updated_at: new Date().toISOString(),
+    }, { merge: true });
+
+    if (Object.prototype.hasOwnProperty.call(data, 'audio_download_url')) {
+      await updateDoc(productDoc.ref, {
+        audio_download_url: deleteField(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+    migrated += 1;
+  }
+
+  return { migrated, privateUrlsMoved };
 }
 
 // ----------------------------------------------------
