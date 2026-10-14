@@ -39,6 +39,7 @@ export const COLLECTIONS = {
   PRODUCTS: 'products',
   PUBLIC_PRODUCTS: 'products_public',
   PRIVATE_PRODUCT_FILES: 'product_private',
+  SYSTEM_MIGRATIONS: 'system_migrations',
   CATEGORIES: 'categories',
   LEAD_MAGNETS: 'lead_magnets',
   LEADS: 'leads',
@@ -147,7 +148,7 @@ export async function saveProductToFirestore(product: Product): Promise<void> {
         updated_at: new Date().toISOString(),
       }, { merge: true });
     } else {
-      await deleteDoc(privateRef).catch(() => {});
+      await deleteDoc(privateRef);
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `${COLLECTIONS.PRODUCTS}/${product.id}`);
@@ -176,6 +177,12 @@ export async function migrateLegacyProductAudioUrls(): Promise<{ migrated: numbe
   const currentUser = auth.currentUser;
   if (!currentUser || currentUser.email?.toLowerCase() !== 'barkissac80@gmail.com' || !currentUser.emailVerified) {
     throw new Error('Seul le compte administrateur vérifié peut lancer la migration.');
+  }
+
+  const markerRef = doc(db, COLLECTIONS.SYSTEM_MIGRATIONS, 'product_audio_v1');
+  const marker = await getDoc(markerRef);
+  if (marker.exists() && marker.data().completed === true) {
+    return { migrated: 0, privateUrlsMoved: 0 };
   }
 
   const snapshot = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
@@ -210,6 +217,7 @@ export async function migrateLegacyProductAudioUrls(): Promise<{ migrated: numbe
     migrated += 1;
   }
 
+  await setDoc(markerRef, { completed: true, migrated, privateUrlsMoved, completed_at: new Date().toISOString() });
   return { migrated, privateUrlsMoved };
 }
 
