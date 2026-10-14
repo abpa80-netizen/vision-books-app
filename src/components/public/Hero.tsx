@@ -9,6 +9,8 @@ export const Hero: React.FC = () => {
     products.find((p) => p.is_active && (p.is_best_seller || p.isBestSeller)) ||
     products.find((p) => p.is_active) ||
     products[0];
+  const featuredAudioUrl = featuredProduct?.audio_url || featuredProduct?.audioPreviewUrl || '';
+  const featuredHasAudio = Boolean(featuredAudioUrl && !featuredAudioUrl.includes('coffee_shop.ogg'));
 
   return (
     <section className="relative overflow-hidden border-b border-neutral-800 bg-neutral-950 py-16 lg:py-24">
@@ -72,7 +74,7 @@ export const Hero: React.FC = () => {
                 <ArrowRight className="h-4 w-4" />
               </a>
 
-              {featuredProduct && (
+              {featuredProduct && featuredHasAudio && (
                 <button
                   onClick={() => setActivePreviewProduct(featuredProduct)}
                   className="flex items-center gap-2.5 rounded-lg border border-neutral-800 bg-neutral-900/80 px-5 py-3.5 text-sm font-medium text-white transition-all hover:border-neutral-700 hover:bg-neutral-800 active:scale-95"
