@@ -102,7 +102,9 @@ app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any
     const lastMessage = String(messages[messages.length - 1]?.content || '');
     const configuredPhoneDigits = typeof whatsappNumber === 'string' ? whatsappNumber.replace(/\\D/g, '') : '';
     const hasConfiguredWhatsApp = configuredPhoneDigits.length >= 8 && !['33612345678', '22990000000'].includes(configuredPhoneDigits);
+    const publicCatalogue = Array.isArray(catalogue) ? catalogue.filter((item: any) => item && item.is_active !== false).slice(0, 40) : [];
     let reply = '';
+    let suggestedProducts: any[] = [];
 
     // Attempt Gemini call if API key configured
     const apiKey = process.env.GEMINI_API_KEY;
@@ -110,7 +112,7 @@ app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any
       try {
         const { GoogleGenAI } = await import('@google/genai');
         const ai = new GoogleGenAI();
-        const safeCatalogue = Array.isArray(catalogue) ? catalogue.slice(0, 40) : [];
+        const safeCatalogue = publicCatalogue;
         const systemPrompt = `Tu es le conseiller commercial de VISION BOOKS. Réponds en français, avec élégance, clarté et sans pression artificielle.
 
 RÈGLES IMPÉRATIVES :
@@ -146,14 +148,57 @@ WhatsApp configuré : ${hasConfiguredWhatsApp ? 'oui' : 'non'}.`;
       }
     }
 
-    // High quality deterministic fallback if API key absent or quota exceeded
+    // Context-aware fallback when Gemini is unavailable or unconfigured.
     if (!reply) {
-      reply = 'Bienvenue chez VISION BOOKS. Je peux vous aider à trouver un livre audio selon votre objectif : business, finance, investissement ou développement personnel.\n\nConsultez le catalogue pour découvrir les titres réellement disponibles. ' + (hasConfiguredWhatsApp ? 'Vous pouvez aussi utiliser le bouton WhatsApp du site pour demander conseil à notre équipe.' : 'Le contact WhatsApp n’est pas configuré pour le moment ; vous pouvez consulter les fiches des livres pour choisir en toute autonomie.');
+      const question = lastMessage.toLowerCase();
+      const topicPatterns: Array<{ pattern: RegExp; label: string }> = [
+        { pattern: /business|entreprise|entrepreneur|entreprendre|vente|client/, label: 'business et entrepreneuriat' },
+        { pattern: /invest|trading|bourse|crypto|immobilier/, label: 'investissement' },
+        { pattern: /financ|argent|revenu|patrimoine|épargne|dette/, label: 'liberté financière' },
+        { pattern: /mindset|motivation|discipline|habitude|confiance|personnel/, label: 'développement personnel' },
+        { pattern: /vip|pack/, label: 'Pack VIP' },
+        { pattern: /gratuit|guide|offert|ressource/, label: 'ressources gratuites' },
+        { pattern: /whatsapp|commander|commande|payer|paiement/, label: 'commande WhatsApp' },
+      ];
+      const matchedTopic = topicPatterns.find((item) => item.pattern.test(question));
+      const words = question.split(/[^a-z0-9à-ÿ]+/).filter((word) => word.length > 3);
+      const relevant = publicCatalogue
+        .map((item: any) => {
+          const text = [item.title, item.author, item.category, item.short_description].filter(Boolean).join(' ').toLowerCase();
+          const score = words.reduce((sum: number, word: string) => sum + (text.includes(word) ? 1 : 0), 0);
+          return { item, score };
+        })
+        .filter((entry: any) => entry.score > 0)
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 2)
+        .map((entry: any) => entry.item);
+      const picks = relevant.length ? relevant : publicCatalogue.slice(0, 2);
+      suggestedProducts = picks.map((item: any) => ({
+        id: item.id, title: item.title, author: item.author, slug: item.slug,
+        cover: item.cover || item.coverUrl, category: item.category,
+        normal_price: item.normal_price, sale_price: item.sale_price,
+      }));
+      if (/vip|pack/.test(question)) {
+        reply = hasActiveVipPack
+          ? 'Le Pack VIP est actif. Je peux vous aider à comparer son contenu avec les livres individuels ; consultez sa présentation sur la page d’accueil pour vérifier les éléments inclus.'
+          : 'Le Pack VIP n’est pas actuellement annoncé comme actif. Je vous recommande de parcourir les livres disponibles et de choisir selon votre objectif.';
+      } else if (/gratuit|guide|offert|ressource/.test(question)) {
+        reply = 'Vous cherchez une ressource gratuite ? Consultez la section du guide offert sur la page d’accueil ou ouvrez une page de capture disponible. Après avoir renseigné votre prénom et votre numéro WhatsApp, le fichier se télécharge et une page de confirmation propose un lien de secours.';
+      } else if (/whatsapp|commander|commande|payer|paiement/.test(question)) {
+        reply = hasConfiguredWhatsApp
+          ? 'Pour commander, ouvrez la fiche du livre qui vous intéresse puis appuyez sur « Commander sur WhatsApp ». Le message sera préparé avec le titre et le lien du livre ; vérifiez ensuite le tarif affiché sur la fiche.'
+          : 'Le contact WhatsApp n’est pas configuré pour le moment. Vous pouvez consulter le catalogue et les tarifs affichés sur chaque fiche produit.';
+      } else if (picks.length) {
+        reply = `Pour votre demande concernant ${matchedTopic?.label || 'nos livres audio'}, voici ${picks.length === 1 ? 'un titre' : 'quelques titres'} du catalogue qui ${picks.length === 1 ? 'pourrait vous intéresser' : 'pourraient vous intéresser'}. Ouvrez une fiche pour lire la présentation complète et vérifier le format et le tarif. ${hasConfiguredWhatsApp ? 'Vous pourrez ensuite utiliser le bouton de commande WhatsApp sur la fiche.' : ''}`;
+      } else {
+        reply = 'Bienvenue chez VISION BOOKS. Je peux vous orienter vers le business, l’investissement, la liberté financière ou le développement personnel. Précisez votre objectif et je chercherai les titres les plus pertinents dans le catalogue.';
+      }
     }
 
     // Never return the business phone number in the public chatbot response.
     return res.json({
       message: reply,
+      suggestedProducts,
       hasActiveVipPack: hasActiveVipPack === true,
     });
   } catch (error: any) {
