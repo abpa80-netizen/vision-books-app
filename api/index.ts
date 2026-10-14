@@ -501,26 +501,24 @@ VISION BOOKS — RESSOURCE STRATÉGIQUE EXCLUSIVE
 ${cleanName.toUpperCase()}
 ================================================================================
 Félicitations pour votre inscription sur VISION BOOKS !
-Vous avez débloqué l'accès complet à cette ressource stratégique préparée par nos
-équipe éditoriale de VISION BOOKS.
+Vous trouverez ci-dessous une courte ressource de réflexion fournie par l’équipe éditoriale de VISION BOOKS.
 
 --------------------------------------------------------------------------------
 1. LE PRINCIPE DU SAVOIR À HAUT EFFET DE LEVIER
 --------------------------------------------------------------------------------
-Les 1% des dirigeants qui réussissent appliquent des modèles mentaux éprouvés
-et automatisent leurs décisions stratégiques.
+Une progression durable commence souvent par des objectifs clairs, des informations fiables et des actions adaptées à votre contexte.
 
 À chaque écoute ou lecture ciblée :
-- Vous épargnez des mois d'erreurs coûteuses.
+- Vous pouvez comparer plusieurs approches avant de prendre une décision.
 - Vous entraînez votre réflexion stratégique.
 - Vous identifiez des pistes d'action pour vos projets.
 
 --------------------------------------------------------------------------------
 2. VOTRE PLAN D'ACTION IMMÉDIAT
 --------------------------------------------------------------------------------
-Étape 1 : Isolez 20 minutes aujourd'hui pour écouter un premier extrait audio.
+Étape 1 : Isolez 20 minutes aujourd'hui pour lire cette ressource.
 Étape 2 : Notez la décision la plus importante à exécuter dans les 24 heures.
-Étape 3 : Consultez notre catalogue complet pour débloquer les masterclasses intégrales.
+Étape 3 : Consultez les fiches du catalogue pour connaître le contenu et les tarifs disponibles.
 
 Visitez notre catalogue officiel :
 👉 https://vision-books.vercel.app
