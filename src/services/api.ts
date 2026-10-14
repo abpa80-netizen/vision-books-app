@@ -59,7 +59,7 @@ export const api = {
     const url = await getDownloadURL(uploaded.ref);
 
     return { url, filename: safeName, size: file.size };
-  }
+  },
   // Categories
   async getCategories(activeOnly = false): Promise<Category[]> {
     const res = await fetch(`/api/categories${activeOnly ? '?active_only=true' : ''}`);
