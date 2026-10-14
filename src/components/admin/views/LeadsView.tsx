@@ -66,6 +66,7 @@ export const LeadsView: React.FC = () => {
     leadMagnets,
     showToast,
     settings,
+    products,
   } = useApp();
   const [search, setSearch] = useState('');
   const [leadMagnetFilter, setLeadMagnetFilter] = useState('all');
@@ -87,6 +88,7 @@ export const LeadsView: React.FC = () => {
   const [editDraft, setEditDraft] = useState('');
   const [copiedStep, setCopiedStep] = useState<string | null>(null);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
+  const [selectedFollowupProductId, setSelectedFollowupProductId] = useState('');
 
   // Lead Detail Profile Modal State (Basic info)
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
@@ -180,6 +182,14 @@ export const LeadsView: React.FC = () => {
         whatsapp: lead.whatsapp || lead.phone || '',
         lead_magnet_id: lead.lead_magnet_id || null,
         lead_magnet_title: lead.lead_magnet_title || 'Guide offert',
+        lead_magnet_content: (() => {
+          const magnet = leadMagnets.find((item) => item.id === lead.lead_magnet_id);
+          return magnet ? JSON.stringify({ title: magnet.title, topic: magnet.topic, format: magnet.format, description: magnet.description, benefits: magnet.benefits, marketing_content: magnet.marketing_content }) : '';
+        })(),
+        recommended_product: (() => {
+          const product = products.find((item) => item.id === selectedFollowupProductId && item.is_active);
+          return product ? { id: product.id, title: product.title, author: product.author, slug: product.slug, normal_price: product.normal_price, sale_price: product.sale_price, audio_preview_available: Boolean(product.audio_url || product.audioPreviewUrl) } : null;
+        })(),
         step: 'all',
       });
 
@@ -219,6 +229,14 @@ export const LeadsView: React.FC = () => {
         whatsapp: lead.whatsapp || lead.phone || '',
         lead_magnet_id: lead.lead_magnet_id || null,
         lead_magnet_title: lead.lead_magnet_title || 'Guide offert',
+        lead_magnet_content: (() => {
+          const magnet = leadMagnets.find((item) => item.id === lead.lead_magnet_id);
+          return magnet ? JSON.stringify({ title: magnet.title, topic: magnet.topic, format: magnet.format, description: magnet.description, benefits: magnet.benefits, marketing_content: magnet.marketing_content }) : '';
+        })(),
+        recommended_product: (() => {
+          const product = products.find((item) => item.id === selectedFollowupProductId && item.is_active);
+          return product ? { id: product.id, title: product.title, author: product.author, slug: product.slug, normal_price: product.normal_price, sale_price: product.sale_price, audio_preview_available: Boolean(product.audio_url || product.audioPreviewUrl) } : null;
+        })(),
         step,
       });
 
@@ -293,6 +311,12 @@ export const LeadsView: React.FC = () => {
   // Open Sequence Modal on specific tab
   const openSequenceModal = (lead: Lead, stepTab: 'all' | 'J1' | 'J2' | 'J3' = 'all') => {
     setActiveSequenceLead(lead);
+    const magnet = leadMagnets.find((item) => item.id === lead.lead_magnet_id);
+    const terms = `${magnet?.title || lead.lead_magnet_title || ''} ${magnet?.topic || ''}`.toLowerCase().split(/[^a-z0-9à-ÿ]+/).filter((term) => term.length > 3);
+    const activeProducts = products.filter((item) => item.is_active);
+    const matched = activeProducts.find((item) => terms.some((term) => `${item.title} ${item.category} ${item.short_description || ''}`.toLowerCase().includes(term)));
+    const defaultProduct = matched || activeProducts.find((item) => item.is_best_seller || item.isBestSeller) || activeProducts[0];
+    setSelectedFollowupProductId(defaultProduct?.id || '');
     setActiveStepTab(stepTab);
     setEditingStep(null);
   };
@@ -801,6 +825,22 @@ export const LeadsView: React.FC = () => {
               >
                 <X className="h-5 w-5" />
               </button>
+            </div>
+
+            {/* Product to recommend in the final J3 follow-up */}
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-3.5 space-y-2">
+              <label htmlFor="followup-recommended-product" className="block text-xs font-semibold text-neutral-200">Livre à présenter dans la relance J3</label>
+              <select
+                id="followup-recommended-product"
+                value={selectedFollowupProductId}
+                onChange={(e) => setSelectedFollowupProductId(e.target.value)}
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"
+              >
+                {products.filter((item) => item.is_active).map((item) => (
+                  <option key={item.id} value={item.id}>{item.title} — {item.author}</option>
+                ))}
+              </select>
+              <p className="text-[10px] leading-relaxed text-neutral-400">Le message final reprendra le lien réel de cette fiche. Si un extrait audio est disponible, il invitera le prospect à l’écouter sur la fiche produit.</p>
             </div>
 
             {/* Global Controls & Status Bar */}
