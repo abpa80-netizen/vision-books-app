@@ -1,10 +1,11 @@
 import React from 'react';
 import { MessageCircle, ArrowRight, Sparkles, BookOpen, Headphones } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 export const FinalCtaSection: React.FC = () => {
   const { settings, navigateTo } = useApp();
-  const phone = (settings?.whatsapp_number || '').replace(/[^0-9]/g, '');
+  const phone = normalizeBusinessWhatsApp(settings?.whatsapp_number);
   const hasWhatsApp = phone.length >= 8;
 
   const defaultMsg = encodeURIComponent(
