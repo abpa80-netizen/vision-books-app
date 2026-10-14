@@ -293,7 +293,7 @@ Réponds STRICTEMENT sous forme de JSON valide :
         description: `Un condensé tactique pensé pour les décideurs souhaitant gagner du temps et éliminer les erreurs coûteuses. Découvrez des principes à examiner et à adapter à votre situation.`,
         benefits: [
           `Une feuille de route limpide à déployer sous 7 jours`,
-          `Les 3 pièges critiques à désamorcer d'urgence`,
+          `Les erreurs fréquentes à examiner`,
           `La grille d'audit exclusive réservée aux membres VIP`,
           `Accès prioritaire aux futures masterclasses audio de VISION BOOKS`,
         ],
@@ -469,7 +469,7 @@ app.post(['/api/lead-magnets/:id/download', '/api/lead-magnets/:slug/download'],
   res.json({
     success: true,
     downloads_count: 1,
-    download_url: `/downloads/${cleanSlug}.pdf`,
+    download_url: `/downloads/${cleanSlug}.txt`,
   });
 });
 
@@ -503,7 +503,7 @@ app.get('/downloads/:filename', (req: Request, res: Response) => {
   const { filename } = req.params;
   const cleanName = filename.replace(/[^a-zA-Z0-9._-]/g, '') || 'vision-books-guide.txt';
 
-  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${cleanName.replace(/\.pdf$/, '.txt')}"`);
 
   res.send(`================================================================================
@@ -512,7 +512,7 @@ ${cleanName.toUpperCase()}
 ================================================================================
 Félicitations pour votre inscription sur VISION BOOKS !
 Vous avez débloqué l'accès complet à cette ressource stratégique préparée par nos
-auteurs et mentors partenaires.
+équipe éditoriale de VISION BOOKS.
 
 --------------------------------------------------------------------------------
 1. LE PRINCIPE DU SAVOIR À HAUT EFFET DE LEVIER
@@ -522,8 +522,8 @@ et automatisent leurs décisions stratégiques.
 
 À chaque écoute ou lecture ciblée :
 - Vous épargnez des mois d'erreurs coûteuses.
-- Vous ancrez des réflexes stratégiques infaillibles.
-- Vous construisez une valeur inestimable pour vous et vos projets.
+- Vous entraînez votre réflexion stratégique.
+- Vous identifiez des pistes d'action pour vos projets.
 
 --------------------------------------------------------------------------------
 2. VOTRE PLAN D'ACTION IMMÉDIAT
