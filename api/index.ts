@@ -99,7 +99,7 @@ app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any
       return res.status(400).json({ error: 'Historique de messages requis.' });
     }
 
-    const lastMessage = messages[messages.length - 1]?.content || '';
+    const lastMessage = String(messages[messages.length - 1]?.content || '');
     const configuredPhoneDigits = typeof whatsappNumber === 'string' ? whatsappNumber.replace(/\\D/g, '') : '';
     const hasConfiguredWhatsApp = configuredPhoneDigits.length >= 8 && !['33612345678', '22990000000'].includes(configuredPhoneDigits);
     let reply = '';
@@ -127,7 +127,10 @@ WhatsApp configuré : ${hasConfiguredWhatsApp ? 'oui' : 'non'}.`;
 
         const response = await ai.models.generateContent({
           model: 'gemini-3.8-flash',
-          contents: String(lastMessage),
+          contents: messages.slice(-12).map((message: any) => ({
+            role: message?.role === 'assistant' || message?.role === 'model' ? 'model' : 'user',
+            parts: [{ text: String(message?.content || '').slice(0, 4000) }],
+          })),
           config: {
             systemInstruction: systemPrompt,
             temperature: 0.5,
@@ -148,9 +151,9 @@ WhatsApp configuré : ${hasConfiguredWhatsApp ? 'oui' : 'non'}.`;
       reply = 'Bienvenue chez VISION BOOKS. Je peux vous aider à trouver un livre audio selon votre objectif : business, finance, investissement ou développement personnel.\n\nConsultez le catalogue pour découvrir les titres réellement disponibles. ' + (hasConfiguredWhatsApp ? 'Vous pouvez aussi utiliser le bouton WhatsApp du site pour demander conseil à notre équipe.' : 'Le contact WhatsApp n’est pas configuré pour le moment ; vous pouvez consulter les fiches des livres pour choisir en toute autonomie.');
     }
 
+    // Never return the business phone number in the public chatbot response.
     return res.json({
       message: reply,
-      whatsappNumber: typeof whatsappNumber === 'string' ? whatsappNumber : '',
       hasActiveVipPack: hasActiveVipPack === true,
     });
   } catch (error: any) {
@@ -168,7 +171,7 @@ app.post('/api/products/generate-ai', async (req: Request, res: Response): Promi
   }
 
   try {
-    const { title, author, category, hints } = req.body;
+    const { title, author, category, hints, bonus, existing_categories } = req.body;
     if (!title || !title.trim()) {
       return res.status(400).json({ error: 'Le titre du livre est obligatoire.' });
     }
@@ -187,6 +190,8 @@ Titre: "${cleanTitle}"
 Auteur: "${cleanAuthor}"
 Catégorie souhaitée: "${category || ''}"
 Notes ou contexte additionnel: "${hints || ''}"
+Bonus réellement fourni par l'administrateur: "${bonus || ''}"
+Catégories existantes: ${JSON.stringify(Array.isArray(existing_categories) ? existing_categories : [])}
 
 Règles de fiabilité : n'invente aucun fait biographique, chiffre, témoignage, certification, résultat garanti, étude de cas réelle ou bonus non fourni dans les notes. Reste convaincant, précis et honnête ; si une information manque, décris les thèmes possibles sans la présenter comme un fait.
 
@@ -195,8 +200,9 @@ Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
   "short_description": "Accroche percutante de 1 à 2 phrases pour le catalogue.",
   "full_description": "Description commerciale complète et vendeuse (3 à 4 paragraphes structurés avec puces).",
   "key_points": ["Point clé 1", "Point clé 2", "Point clé 3", "Point clé 4"],
-  "bonus": "Titre et description du bonus confidentiel offert avec ce livre audio.",
-  "cta_text": "Commander le livre audio de ${cleanAuthor} sur WhatsApp"
+  "bonus_presentation": "Présentation du bonus uniquement s'il a été renseigné ; sinon chaîne vide.",
+  "cta_text": "Appel à l'action clair, sans inventer de promesse",
+  "suggested_category": null
 }`;
 
         const response = await ai.models.generateContent({
@@ -232,7 +238,10 @@ Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
       };
     }
 
-    return res.json(resultJson);
+    return res.json({ data: {
+      ...resultJson,
+      bonus_presentation: resultJson.bonus_presentation || resultJson.bonus || '',
+    }});
   } catch (error: any) {
     console.error('Error in /api/products/generate-ai:', error);
     return res.status(500).json({ error: error.message || 'Erreur lors de la génération IA du produit.' });
@@ -302,7 +311,7 @@ Réponds STRICTEMENT sous forme de JSON valide :
       };
     }
 
-    return res.json(resultJson);
+    return res.json({ data: resultJson });
   } catch (error: any) {
     console.error('Error in /api/lead-magnets/generate-ai:', error);
     return res.status(500).json({ error: error.message || 'Erreur lors de la génération du Lead Magnet.' });
