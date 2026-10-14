@@ -61,6 +61,43 @@ export const api = {
 
     return { url, filename: safeName, size: file.size };
   },
+  async uploadImage(file: File): Promise<{ url: string; filename: string; size: number }> {
+    const user = auth.currentUser;
+    if (!user || user.email?.toLowerCase() !== 'barkissac80@gmail.com' || !user.emailVerified) {
+      throw new Error("Connectez-vous avec le compte administrateur vérifié pour téléverser une image.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("L’image dépasse la limite de 5 Mo.");
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const mimeByExtension: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
+    const contentType = mimeByExtension[extension] || file.type;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(contentType)) {
+      throw new Error("Format d’image non pris en charge. Utilisez JPG, PNG ou WebP.");
+    }
+
+    const safeName = file.name
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(-100) || 'image';
+    const objectPath = `site-images/${user.uid}/${Date.now()}-${safeName}`;
+    const objectRef = ref(storage, objectPath);
+    const uploaded = await uploadBytes(objectRef, file, {
+      contentType,
+      customMetadata: { uploadedBy: user.uid },
+    });
+    const url = await getDownloadURL(uploaded.ref);
+    return { url, filename: safeName, size: file.size };
+  },
+
   // Categories
   async getCategories(activeOnly = false): Promise<Category[]> {
     const res = await fetch(`/api/categories${activeOnly ? '?active_only=true' : ''}`);
