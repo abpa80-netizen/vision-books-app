@@ -534,8 +534,7 @@ ${productUrl}`;
                         <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                       ))}
                     </div>
-                    <span className="font-bold text-white">4.9 / 5</span>
-                    <span className="text-neutral-500">(+240 avis vérifiés)</span>
+                    <span className="font-semibold text-neutral-300">Évaluation du contenu</span>
                   </div>
                 </div>
 
@@ -548,15 +547,20 @@ ${productUrl}`;
                 <div className="mt-3 flex items-center gap-2 text-sm text-neutral-300">
                   <span>Par</span>
                   <span className="font-bold text-white">{product.author}</span>
-                  <span className="rounded bg-neutral-800 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                    Auteur Référent
-                  </span>
                 </div>
 
                 {/* Description courte d'accroche */}
                 <p className="mt-4 text-sm sm:text-base leading-relaxed text-neutral-300">
                   {product.short_description || product.summary}
                 </p>
+                {product.full_description && (
+                  <div className="mt-4 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4 sm:p-5 space-y-3 text-sm leading-relaxed text-neutral-300">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-amber-400">Présentation détaillée</h2>
+                    {product.full_description.split('\n\n').map((paragraph, idx) => (
+                      <p key={idx}>{paragraph}</p>
+                    ))}
+                  </div>
+                )}
 
                 {/* Urgence Commerciale si configurée et active */}
                 {isUrgencyActive && (
@@ -679,21 +683,6 @@ ${productUrl}`;
                   </div>
                 </div>
 
-                {/* Key Points Summary Teaser */}
-                <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                    <Sparkles className="h-4 w-4" />
-                    <span>Ce que vous allez maîtriser</span>
-                  </div>
-                  <div className="mt-4 space-y-2.5">
-                    {keyPoints.slice(0, 3).map((kp, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-neutral-200">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                        <span className="leading-snug">{kp}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -737,36 +726,7 @@ ${productUrl}`;
                   </div>
                 </div>
 
-                {/* 2. DESCRIPTION COMPLETE */}
-                <div id="description" className="rounded-3xl border border-neutral-800 bg-neutral-900/50 p-6 sm:p-8">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
-                    <BookOpen className="h-4 w-4" />
-                    <span>Présentation Intégrale</span>
-                  </div>
-                  <h2 className="mt-2 font-display text-2xl font-bold text-white">
-                    Description Complète du Livre
-                  </h2>
 
-                  <div className="mt-6 space-y-4 text-sm leading-relaxed text-neutral-300">
-                    {product.full_description ? (
-                      product.full_description.split('\n\n').map((paragraph, idx) => (
-                        <p key={idx}>{paragraph}</p>
-                      ))
-                    ) : (
-                      <>
-                        <p>
-                          {product.short_description || product.summary}
-                        </p>
-                        <p>
-                          Dans un environnement où le temps est votre actif le plus précieux, ce livre audio a été conçu pour délivrer l'essence stratégique des meilleures pratiques en matière de leadership, d'investissement et de développement stratégique.
-                        </p>
-                        <p>
-                          Chaque chapitre a été soigneusement édité pour éliminer le superflu et se concentrer exclusivement sur les leviers d'action à fort impact. Écoutez-le lors de vos déplacements, de vos séances de sport ou lors de vos moments de réflexion pour nourrir votre esprit d'idées novatrices.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
 
                 {/* 3. BONUS SECTION */}
                 {product.bonus && (
