@@ -512,7 +512,7 @@ export const CommercialAssistant: React.FC = () => {
               className="shrink-0 flex items-center gap-1 font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
             >
               <MessageCircle className="h-3 w-3" />
-              <span>WhatsApp ({whatsappNumber})</span>
+              <span>Contacter sur WhatsApp</span>
             </button>
           </div>
 
