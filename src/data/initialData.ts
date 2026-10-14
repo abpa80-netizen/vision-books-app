@@ -186,7 +186,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Les stratégies d\'allocation d\'actifs des 1%'
     ],
     bonus: 'Calculateur Excel dynamique de liberté financière + Template de suivi mensuel de trésorerie.',
-    audio_url: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+    audio_url: '',
     product_url: '/produits/la-voie-de-la-liberte-financiere',
     is_best_seller: true,
     is_active: true,
