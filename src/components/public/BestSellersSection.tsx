@@ -30,8 +30,16 @@ export const BestSellersSection: React.FC = () => {
     const result: Product[] = [];
     const seenIds = new Set<string>();
 
+    // Admin saves both the global order and each product's position. Prefer explicit product
+    // positions when present so a stale secondary settings mirror cannot override the latest order.
+    const productOrderedIds = activeProducts
+      .filter((p) => Number.isFinite(Number(p.bestseller_order)) && Number(p.bestseller_order) > 0)
+      .sort((a, b) => Number(a.bestseller_order) - Number(b.bestseller_order))
+      .map((p) => p.id);
+    const preferredIds = productOrderedIds.length >= 2 ? productOrderedIds : orderedIds;
+
     // 2. Insert products in the explicit configured order (Positions 1 to 6)
-    for (const id of orderedIds) {
+    for (const id of preferredIds) {
       if (result.length >= 6) break;
       const found = activeProducts.find((p) => p.id === id);
       if (found && !seenIds.has(found.id)) {
