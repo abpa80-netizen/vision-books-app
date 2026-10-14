@@ -4,7 +4,8 @@ import { useApp } from '../../context/AppContext';
 
 export const FinalCtaSection: React.FC = () => {
   const { settings, navigateTo } = useApp();
-  const phone = (settings?.whatsapp_number || '22990000000').replace(/[^0-9]/g, '');
+  const phone = (settings?.whatsapp_number || '').replace(/[^0-9]/g, '');
+  const hasWhatsApp = phone.length >= 8;
 
   const defaultMsg = encodeURIComponent(
     'Bonjour VISION BOOKS, je souhaite découvrir le catalogue complet de livres audio et passer commande.'
@@ -32,15 +33,17 @@ export const FinalCtaSection: React.FC = () => {
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a
-            href={`https://wa.me/${phone}?text=${defaultMsg}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-sm font-bold text-neutral-950 hover:bg-amber-400 transition-all shadow-xl hover:shadow-amber-500/20"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>Commander sur WhatsApp</span>
-          </a>
+          {hasWhatsApp && (
+            <a
+              href={'https://wa.me/' + phone + '?text=' + defaultMsg}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-sm font-bold text-neutral-950 hover:bg-amber-400 transition-all shadow-xl hover:shadow-amber-500/20"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Commander sur WhatsApp</span>
+            </a>
+          )}
 
           <button
             onClick={() => navigateTo('/produits')}
@@ -58,9 +61,9 @@ export const FinalCtaSection: React.FC = () => {
             <span>Audio Studio HD MP3</span>
           </div>
           <span className="text-neutral-700">·</span>
-          <div>Validation immédiate 7j/7</div>
+          <div>Sans abonnement</div>
           <span className="text-neutral-700">·</span>
-          <div>Bonus d'action & fiches synthèses inclus</div>
+          <div>Écoute à vie après achat</div>
         </div>
       </div>
     </section>
