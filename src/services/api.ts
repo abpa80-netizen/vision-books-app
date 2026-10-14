@@ -550,7 +550,23 @@ export const api = {
   },
 
   // Gemini Commercial Assistant
-  async chatWithAssistant(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<{
+  async chatWithAssistant(
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    context: {
+      whatsappNumber?: string;
+      hasActiveVipPack?: boolean;
+      catalogue?: Array<{
+        id: string;
+        title: string;
+        author: string;
+        slug: string;
+        category?: string;
+        short_description?: string;
+        normal_price?: number;
+        sale_price?: number | null;
+      }>;
+    } = {},
+  ): Promise<{
     message: string;
     suggestedProducts?: Array<{
       id: string;
@@ -568,7 +584,7 @@ export const api = {
     const res = await fetch('/api/assistant/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, ...context }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
