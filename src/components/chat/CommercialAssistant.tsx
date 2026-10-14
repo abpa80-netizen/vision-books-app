@@ -43,7 +43,7 @@ const STARTER_SUGGESTIONS = [
 ];
 
 export const CommercialAssistant: React.FC = () => {
-  const { navigateTo, settings, currentPath } = useApp();
+  const { navigateTo, settings, currentPath, products, vipPack } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,7 +99,25 @@ export const CommercialAssistant: React.FC = () => {
         content: m.content,
       }));
 
-      const response = await api.chatWithAssistant(apiPayload);
+      const safeCatalogue = products
+        .filter((product) => product.is_active)
+        .slice(0, 40)
+        .map((product) => ({
+          id: product.id,
+          title: product.title,
+          author: product.author,
+          slug: product.slug,
+          category: product.category,
+          short_description: product.short_description,
+          normal_price: product.normal_price,
+          sale_price: product.sale_price,
+        }));
+
+      const response = await api.chatWithAssistant(apiPayload, {
+        whatsappNumber: settings.whatsapp_number || '',
+        hasActiveVipPack: Boolean(vipPack && (vipPack as any).is_active !== false && (vipPack as any).active !== false),
+        catalogue: safeCatalogue,
+      });
 
       const assistantMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
