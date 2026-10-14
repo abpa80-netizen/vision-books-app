@@ -47,8 +47,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       onChange(result.url);
     } catch (err: any) {
       console.error('File upload error:', err);
-      // Fallback
-      onChange(`/downloads/${file.name}`);
+      setErrorMessage(err?.message || "Le téléversement a échoué. Vérifiez la configuration du stockage puis réessayez.");
     } finally {
       setIsUploading(false);
     }
