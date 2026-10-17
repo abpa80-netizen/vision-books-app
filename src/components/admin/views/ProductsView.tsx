@@ -1293,8 +1293,8 @@ export const ProductsView: React.FC = () => {
       {/* MODAL DU GÉNÉRATEUR IA DE PRODUIT                        */}
       {/* ======================================================== */}
       {isAiModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md overflow-y-auto">
-          <div className="relative my-8 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border-2 border-amber-500/40 bg-neutral-950 p-6 sm:p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center bg-black/90 p-2 sm:p-4 backdrop-blur-md overflow-y-auto overscroll-contain">
+          <div className="relative my-2 sm:my-8 max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border-2 border-amber-500/40 bg-neutral-950 p-4 sm:p-8 shadow-2xl">
             {/* Close button */}
             <button
               type="button"
