@@ -37,12 +37,13 @@ export const api = {
       epub: 'application/epub+zip',
       zip: 'application/zip',
       docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      txt: 'text/plain',
     };
     const allowedTypes = Object.values(mimeByExtension);
     const detectedType = file.type || 'application/octet-stream';
     const contentType = allowedTypes.includes(detectedType) ? detectedType : (mimeByExtension[extension] || detectedType);
     if (!allowedTypes.includes(contentType)) {
-      throw new Error("Format non pris en charge. Utilisez PDF, MP3, EPUB, ZIP ou DOCX.");
+      throw new Error("Format non pris en charge. Utilisez PDF, MP3, EPUB, ZIP, DOCX ou TXT.");
     }
 
     const safeName = file.name
