@@ -271,7 +271,7 @@ Retourne STRICTEMENT un objet JSON valide, sans Markdown ni texte avant/après, 
         });
 
         if (response && response.text) {
-          resultJson = JSON.parse(response.text.trim());
+          resultJson = JSON.parse(response.text.trim().replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, ''));
         }
       } catch (geminiErr: any) {
         console.warn('[Gemini Product AI Generator Warning]:', geminiErr?.message || geminiErr);
@@ -281,16 +281,16 @@ Retourne STRICTEMENT un objet JSON valide, sans Markdown ni texte avant/après, 
     // High quality deterministic fallback
     if (!resultJson) {
       resultJson = {
-        short_description: `Découvrez les thèmes et les idées de « ${cleanTitle} » dans une présentation destinée aux personnes qui souhaitent approfondir leurs connaissances.`,
-        full_description: `Explorez les idées principales de « ${cleanTitle} » et les questions qu'il invite à examiner.\n\nCette présentation vous aide à comprendre les thèmes abordés et à repérer les enseignements que vous souhaitez approfondir.\n\nConsultez les informations de la fiche produit pour connaître le format, le contenu et les éventuels bonus réellement inclus.`,
+        short_description: `Une exploration de « ${cleanTitle} », pensée pour les lecteurs qui veulent mieux comprendre le thème de cet ouvrage et transformer leurs idées en pistes d'action adaptées à leur situation.`,
+        full_description: `POURQUOI S'INTÉRESSER À CET OUVRAGE ?\n\n« ${cleanTitle} » invite à approfondir un sujet qui mérite une réflexion structurée. Cette fiche présente les axes suggérés par son titre et sa catégorie (${category || 'thématique à préciser'}), afin de vous aider à déterminer si le contenu correspond à vos besoins.\n\nCE QUE VOUS POUVEZ EN EXPLORER\n\nSelon le thème annoncé, l'ouvrage peut servir de point de départ pour clarifier vos priorités, questionner vos habitudes et organiser vos prochaines décisions. Utilisez les idées qui correspondent à votre contexte et confrontez-les à votre expérience.\n\nÀ QUI S'ADRESSE CE LIVRE ?\n\nIl peut intéresser les lecteurs qui souhaitent progresser sur cette thématique, acquérir de nouveaux repères et consacrer du temps à leur développement personnel ou professionnel. Le résumé fourni par l'éditeur reste la meilleure référence pour confirmer les sujets réellement traités.\n\nCOMMENT EN TIRER PARTI\n\nPendant l'écoute, notez les idées utiles, choisissez une action réaliste et évaluez ensuite ce qui mérite d'être approfondi. Cette démarche vous aide à passer d'une écoute passive à une réflexion concrète, sans supposer que tous les conseils s'appliquent à chaque situation.\n\nConsultez les informations de la fiche pour vérifier le format et le contenu exact de l'édition proposée.`,
         key_points: [
-          `Les idées principales présentées dans l’ouvrage`,
-          `Des pistes de réflexion pour vos décisions professionnelles`,
-          `Des thèmes à approfondir selon vos objectifs`,
-          `Un support pour organiser vos notes et prochaines actions`,
+          `Clarifier les idées et questions centrales liées au thème de l'ouvrage`,
+          `Repérer des pistes de réflexion à adapter à votre propre contexte`,
+          `Organiser les enseignements utiles en actions concrètes et réalistes`,
+          `Approfondir les sujets qui correspondent à vos objectifs actuels`,
         ],
-        bonus: `Bonus à confirmer selon les informations fournies`,
-        cta_text: `Commander l'ouvrage de ${cleanAuthor} sur WhatsApp`,
+        bonus_presentation: bonus ? `Bonus inclus : ${bonus}` : '',
+        cta_text: `Découvrir le livre de ${cleanAuthor} sur WhatsApp`,
       };
     }
 
@@ -352,7 +352,7 @@ Réponds STRICTEMENT sous forme de JSON valide :
         });
 
         if (response && response.text) {
-          resultJson = JSON.parse(response.text.trim());
+          resultJson = JSON.parse(response.text.trim().replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, ''));
         }
       } catch (geminiErr: any) {
         console.warn('[Gemini Lead Magnet Generator Warning]:', geminiErr?.message || geminiErr);
@@ -489,7 +489,7 @@ Format JSON STRICT :
         });
 
         if (response && response.text) {
-          const parsed = JSON.parse(response.text.trim());
+          const parsed = JSON.parse(response.text.trim().replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, ''));
           if (step === 'J1' && parsed.j1) sequence.j1 = parsed.j1;
           else if (step === 'J2' && parsed.j2) sequence.j2 = parsed.j2;
           else if (step === 'J3' && parsed.j3) sequence.j3 = parsed.j3;
