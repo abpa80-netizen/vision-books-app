@@ -111,7 +111,7 @@ app.post('/api/assistant/chat', async (req: Request, res: Response): Promise<any
     if (apiKey) {
       try {
         const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI();
+        const ai = new GoogleGenAI({ apiKey });
         const safeCatalogue = publicCatalogue;
         const systemPrompt = `Tu es le conseiller commercial de VISION BOOKS. Réponds en français, avec élégance, clarté et sans pression artificielle.
 
@@ -229,24 +229,34 @@ app.post('/api/products/generate-ai', async (req: Request, res: Response): Promi
     if (apiKey) {
       try {
         const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI();
-        const prompt = `Génère le texte marketing complet en français pour ce livre audio de prestige sur VISION BOOKS:
-Titre: "${cleanTitle}"
-Auteur: "${cleanAuthor}"
-Catégorie souhaitée: "${category || ''}"
-Notes ou contexte additionnel: "${hints || ''}"
-Bonus réellement fourni par l'administrateur: "${bonus || ''}"
-Catégories existantes: ${JSON.stringify(Array.isArray(existing_categories) ? existing_categories : [])}
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Tu es un rédacteur éditorial et copywriter senior spécialisé dans les livres audio de VISION BOOKS. Écris en français naturel, précis, professionnel et persuasif, avec une vraie analyse du sujet du livre — pas des phrases génériques.
 
-Règles de fiabilité : n'invente aucun fait biographique, chiffre, témoignage, certification, résultat garanti, étude de cas réelle ou bonus non fourni dans les notes. Reste convaincant, précis et honnête ; si une information manque, décris les thèmes possibles sans la présenter comme un fait.
+FICHE DE TRAVAIL
+Titre exact : "${cleanTitle}"
+Auteur indiqué : "${cleanAuthor}"
+Catégorie : "${category || ''}"
+Résumé, thème ou notes fournis par l'administrateur : "${hints || 'Aucun résumé fourni. Déduis prudemment le thème probable à partir du titre et signale les éléments qui restent à vérifier.'}"
+Bonus réellement inclus : "${bonus || 'Aucun bonus confirmé'}"
+Catégories existantes : ${JSON.stringify(Array.isArray(existing_categories) ? existing_categories : [])}
 
-Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
+EXIGENCES ÉDITORIALES
+- Fais porter chaque texte sur le sujet précis suggéré par le titre, et explique le problème traité, les idées à explorer, à qui le livre peut être utile et comment le lecteur peut appliquer les enseignements.
+- Description complète : 4 à 6 paragraphes substantiels, environ 250 à 400 mots, avec sous-titres courts et listes lisibles. Évite les répétitions.
+- Description courte : 2 phrases spécifiques au sujet, maximum 45 mots.
+- Fournis 4 points clés concrets, distincts et liés au thème du livre.
+- CTA bref, élégant et adapté à la commande d'un livre audio.
+- Si aucun résumé fiable n'est fourni, présente les thèmes comme des axes probables à explorer, jamais comme des chapitres ou citations réels. N'invente aucun fait biographique, chiffre, témoignage, certification, résultat garanti ou contenu vérifié.
+- Bonus : ne le présente que s'il a été réellement fourni ; sinon retourne une chaîne vide.
+- Suggère une catégorie existante quand elle correspond. Ne crée une nouvelle catégorie que si aucune catégorie existante ne convient.
+
+Retourne STRICTEMENT un objet JSON valide, sans Markdown ni texte avant/après, avec exactement ces clés :
 {
-  "short_description": "Accroche percutante de 1 à 2 phrases pour le catalogue.",
-  "full_description": "Description commerciale complète et vendeuse (3 à 4 paragraphes structurés avec puces).",
-  "key_points": ["Point clé 1", "Point clé 2", "Point clé 3", "Point clé 4"],
-  "bonus_presentation": "Présentation du bonus uniquement s'il a été renseigné ; sinon chaîne vide.",
-  "cta_text": "Appel à l'action clair, sans inventer de promesse",
+  "short_description": "Accroche de catalogue spécifique au sujet",
+  "full_description": "Description éditoriale détaillée de 250 à 400 mots",
+  "key_points": ["Point concret 1", "Point concret 2", "Point concret 3", "Point concret 4"],
+  "bonus_presentation": "",
+  "cta_text": "Appel à l'action",
   "suggested_category": null
 }`;
 
@@ -255,7 +265,8 @@ Réponds STRICTEMENT sous forme de JSON valide avec ces clés :
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
-            temperature: 0.7,
+            temperature: 0.75,
+            maxOutputTokens: 1800,
           },
         });
 
@@ -309,7 +320,7 @@ app.post('/api/lead-magnets/generate-ai', async (req: Request, res: Response): P
     if (apiKey) {
       try {
         const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI();
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `Tu es le stratège marketing en chef de VISION BOOKS. Conçois un guide offert (Lead Magnet) irrésistible à haute conversion.
 Thématique: "${topic || 'Entrepreneuriat & Liberté Financière'}"
 Cible: "${target_audience || 'Entrepreneurs et dirigeants ambitieux'}"
@@ -381,7 +392,15 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
     const selectedProduct = recommended_product && typeof recommended_product === 'object' && recommended_product.slug && recommended_product.title
       ? recommended_product
       : null;
-    const productUrl = selectedProduct ? `https://vision-books.vercel.app/produit/${encodeURIComponent(String(selectedProduct.slug))}` : 'https://vision-books.vercel.app/catalogue';
+    const requestOrigin = (() => {
+      try {
+        const origin = typeof req.headers.origin === 'string' ? new URL(req.headers.origin).origin : '';
+        return /^https?:\/\//.test(origin) ? origin : 'https://vision-books-app.vercel.app';
+      } catch {
+        return 'https://vision-books-app.vercel.app';
+      }
+    })();
+    const productUrl = selectedProduct ? `${requestOrigin}/produit/${encodeURIComponent(String(selectedProduct.slug))}` : `${requestOrigin}/catalogue`;
     const productPrice = selectedProduct
       ? (Number.isFinite(Number(selectedProduct.sale_price)) && Number(selectedProduct.sale_price) > 0 && Number(selectedProduct.sale_price) < Number(selectedProduct.normal_price)
           ? `${selectedProduct.sale_price} € (au lieu de ${selectedProduct.normal_price} €)`
@@ -393,7 +412,7 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
       url: productUrl,
       price: productPrice,
       audio_preview_available: selectedProduct.audio_preview_available === true,
-    } : { title: 'Catalogue de livres audio', author: 'VISION BOOKS', url: 'https://vision-books.vercel.app/catalogue', price: 'voir les tarifs sur chaque fiche', audio_preview_available: false };
+    } : { title: 'Catalogue de livres audio', author: 'VISION BOOKS', url: '${requestOrigin}/catalogue', price: 'voir les tarifs sur chaque fiche', audio_preview_available: false };
 
     let sequence = {
       j1: `Bonjour ${cleanName} ! 🎧 C'est l'équipe VISION BOOKS. Avez-vous pu télécharger et consulter « ${cleanGuide} » ? La clé réside dans l'application immédiate d'un principe fort dès les premières 24h. Je reste à votre disposition si vous souhaitez échanger !`,
@@ -408,7 +427,7 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
     if (apiKey) {
       try {
         const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI();
+        const ai = new GoogleGenAI({ apiKey });
 
         let prompt = '';
         if (step === 'J1') {
@@ -505,7 +524,7 @@ app.post('/api/leads/generate-followup', async (req: Request, res: Response): Pr
     if (apiKey) {
       try {
         const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI();
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `Tu es le conseiller stratégique personnel de la maison d'édition audio VISION BOOKS.
 Rédige un message WhatsApp de relance chaleureux, professionnel et percutant en français :
 - Prénom : "${cleanName}"
