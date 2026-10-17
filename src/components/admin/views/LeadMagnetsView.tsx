@@ -615,7 +615,7 @@ export const LeadMagnetsView: React.FC = () => {
                   onChange={(url) => setFormData({ ...formData, file_url: url })}
                   label="Fichier du Lead Magnet (PDF, ZIP, Document) *"
                   helpText="Téléversez le fichier que le prospect recevra immédiatement après inscription"
-                  accept=".pdf,.zip,.epub,.mp3,.docx"
+                  accept=".pdf,.zip,.epub,.mp3,.docx,.txt"
                 />
               </div>
 
