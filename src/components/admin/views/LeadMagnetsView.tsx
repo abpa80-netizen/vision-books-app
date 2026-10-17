@@ -65,7 +65,7 @@ export const LeadMagnetsView: React.FC = () => {
 
   const handleCopyShareLink = (slug: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const fullUrl = `${origin}/lead-magnet/${slug}`;
+    const fullUrl = `${origin}/ressource/${slug}`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(fullUrl);
       showToast(`Lien de partage copié ! ${fullUrl}`, 'success');
@@ -358,7 +358,7 @@ export const LeadMagnetsView: React.FC = () => {
                   {/* Slug Pill */}
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] text-neutral-300">
                     <span className="truncate rounded bg-neutral-950/80 px-2 py-0.5 font-mono text-neutral-300 backdrop-blur-sm border border-neutral-800">
-                      /lead-magnet/{lm.slug}
+                      /ressource/{lm.slug}
                     </span>
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export const LeadMagnetsView: React.FC = () => {
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-amber-300">Lien de partage :</span>
                       <span className="font-mono text-[10px] text-neutral-400 truncate max-w-[130px]">
-                        /lead-magnet/{lm.slug}
+                        /ressource/{lm.slug}
                       </span>
                     </div>
                     <button
@@ -433,7 +433,7 @@ export const LeadMagnetsView: React.FC = () => {
                     </div>
 
                     <button
-                      onClick={() => navigateTo(`/lead-magnet/${lm.slug}`)}
+                      onClick={() => navigateTo(`/ressource/${lm.slug}`)}
                       className="flex items-center gap-1 text-[11px] font-medium text-amber-400 hover:text-amber-300 transition-colors"
                       title="Tester la page de capture"
                     >
@@ -563,10 +563,10 @@ export const LeadMagnetsView: React.FC = () => {
               {/* Slug */}
               <div>
                 <label className="block font-medium text-neutral-300">
-                  Slug URL publique (ex: /lead-magnet/[slug]) *
+                  Identifiant du lien public (ex: guide-liberte-financiere) *
                 </label>
                 <div className="mt-1.5 flex items-center rounded-lg border border-neutral-800 bg-neutral-900 pl-3 focus-within:border-amber-500">
-                  <span className="font-mono text-neutral-500">/lead-magnet/</span>
+                  <span className="font-mono text-neutral-500">/ressource/</span>
                   <input
                     type="text"
                     required
