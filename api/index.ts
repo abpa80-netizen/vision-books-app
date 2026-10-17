@@ -271,7 +271,7 @@ Retourne STRICTEMENT un objet JSON valide, sans Markdown ni texte avant/après, 
         });
 
         if (response && response.text) {
-          resultJson = JSON.parse(response.text.trim().replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, ''));
+          resultJson = JSON.parse(response.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
         }
       } catch (geminiErr: any) {
         console.warn('[Gemini Product AI Generator Warning]:', geminiErr?.message || geminiErr);
@@ -352,7 +352,7 @@ Réponds STRICTEMENT sous forme de JSON valide :
         });
 
         if (response && response.text) {
-          resultJson = JSON.parse(response.text.trim().replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, ''));
+          resultJson = JSON.parse(response.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
         }
       } catch (geminiErr: any) {
         console.warn('[Gemini Lead Magnet Generator Warning]:', geminiErr?.message || geminiErr);
@@ -489,7 +489,7 @@ Format JSON STRICT :
         });
 
         if (response && response.text) {
-          const parsed = JSON.parse(response.text.trim().replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, ''));
+          const parsed = JSON.parse(response.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
           if (step === 'J1' && parsed.j1) sequence.j1 = parsed.j1;
           else if (step === 'J2' && parsed.j2) sequence.j2 = parsed.j2;
           else if (step === 'J3' && parsed.j3) sequence.j3 = parsed.j3;
