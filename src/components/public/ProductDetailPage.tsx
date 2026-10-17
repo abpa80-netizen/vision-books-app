@@ -575,104 +575,6 @@ ${productUrl}`;
                   </div>
                 )}
 
-                {/* ========================================================= */}
-                {/* PRIX ULTRA VISIBLE & BLOC DE COMMANDE                     */}
-                {/* ========================================================= */}
-                <div className="mt-6 rounded-3xl border-2 border-amber-500/40 bg-gradient-to-br from-neutral-900 via-neutral-900 to-amber-950/20 p-6 sm:p-7 shadow-2xl">
-                  {/* Pricing row */}
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 border-b border-neutral-800 pb-5">
-                    <div>
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                        {hasPromo ? 'Tarif promotionnel de lancement' : 'Tarif standard'}
-                      </div>
-                      <div className="mt-1 flex items-baseline gap-3">
-                        {hasPromo ? (
-                          <>
-                            <span className="font-mono text-4xl sm:text-5xl font-extrabold text-amber-400 tabular-nums">
-                              {currentPrice.toFixed(2)} €
-                            </span>
-                            <span className="font-mono text-xl sm:text-2xl text-neutral-500 line-through tabular-nums">
-                              {regularPrice.toFixed(2)} €
-                            </span>
-                          </>
-                        ) : (
-                          <span className="font-mono text-4xl sm:text-5xl font-extrabold text-white tabular-nums">
-                            {regularPrice.toFixed(2)} €
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {hasPromo && (
-                      <div className="self-start sm:self-center rounded-2xl bg-amber-500/20 border border-amber-500/40 px-3.5 py-1.5 text-right">
-                        <div className="font-bold text-xs text-amber-300">
-                          Économisez {discountAmount} €
-                        </div>
-                        <div className="text-[10px] text-neutral-400">Paiement unique • Sans abonnement</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Encadré Bonus Offert */}
-                  {product.bonus && (
-                    <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-neutral-950 font-bold shadow-md">
-                        <Gift className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-display text-xs font-bold uppercase tracking-wider text-amber-400">
-                            Bonus Spécial Inclus avec votre commande
-                          </span>
-                          <span className="rounded bg-neutral-900 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
-                            Offert
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs font-medium text-neutral-200">
-                          {product.bonus}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ======================================================= */}
-                  {/* GRAND CTA « COMMANDER SUR WHATSAPP »                     */}
-                  {/* ======================================================= */}
-                  <div className="mt-6 flex flex-col gap-2.5">
-                    <button
-                      onClick={handleOrderWhatsApp}
-                      className="group relative flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 px-6 py-4.5 text-base sm:text-lg font-extrabold text-white shadow-xl shadow-emerald-950/60 transition-all transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-                    >
-                      <MessageCircle className="h-6 w-6 stroke-[2.4] fill-white/20 group-hover:scale-110 transition-transform" />
-                      <span>Commander sur WhatsApp</span>
-                      <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </button>
-
-                    <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-400 text-center">
-                      <span className="flex items-center gap-1">
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        Réponse en moins de 5 min
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        Accès & téléchargement immédiats
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Moyens de paiement acceptés */}
-                  <div className="mt-5 border-t border-neutral-800/80 pt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-400">
-                    <span className="font-semibold text-neutral-300">Paiements acceptés :</span>
-                    <span className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-neutral-400">
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">WhatsApp Direct</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Wave</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Orange Money</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Carte Bancaire</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Virement</span>
-                    </span>
-                  </div>
-                </div>
 
               </div>
             </div>
@@ -915,55 +817,10 @@ ${productUrl}`;
                     </div>
                   </div>
 
-                  {/* Sidebar WhatsApp Order Button */}
-                  <div className="mt-6 pt-4 border-t border-neutral-800">
-                    <div className="flex items-baseline justify-between mb-3">
-                      <span className="text-xs text-neutral-400">Prix :</span>
-                      <div className="flex items-baseline gap-2">
-                        {hasPromo ? (
-                          <>
-                            <span className="font-mono text-xl font-extrabold text-amber-400">
-                              {currentPrice.toFixed(2)} €
-                            </span>
-                            <span className="font-mono text-xs text-neutral-500 line-through">
-                              {regularPrice.toFixed(2)} €
-                            </span>
-                          </>
-                        ) : (
-                          <span className="font-mono text-xl font-extrabold text-white">
-                            {regularPrice.toFixed(2)} €
-                          </span>
-                        )}
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={handleOrderWhatsApp}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 py-3.5 px-4 text-xs font-bold text-white shadow-lg shadow-emerald-950/40 transition-colors"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span>Commander sur WhatsApp</span>
-                    </button>
-                  </div>
                 </div>
 
-                {/* Assistance card */}
-                <div className="rounded-3xl border border-neutral-800 bg-neutral-900/40 p-6 text-center">
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <h4 className="mt-3 text-xs font-bold text-white">Besoin d'aide ou question ?</h4>
-                  <p className="mt-1 text-[11px] text-neutral-400 leading-relaxed">
-                    Notre équipe VISION BOOKS est à votre écoute directe sur WhatsApp pour répondre à vos questions et vous guider.
-                  </p>
-                  <button
-                    onClick={handleOrderWhatsApp}
-                    className="mt-3 text-xs font-semibold text-amber-400 hover:underline inline-flex items-center gap-1"
-                  >
-                    <span>Poser une question</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
+
               </div>
             </div>
           </div>
@@ -1087,30 +944,6 @@ ${productUrl}`;
           </section>
         )}
       </main>
-
-      {/* ================================================================ */}
-      {/* MOBILE STICKY CTA BAR (Optimized Conversion on Mobile Devices)     */}
-      {/* ================================================================ */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-800 bg-neutral-950/95 p-3 backdrop-blur-md flex items-center justify-between gap-3 shadow-2xl">
-        <div className="flex flex-col">
-          <span className="font-mono text-lg font-extrabold text-amber-400">
-            {currentPrice.toFixed(2)} €
-          </span>
-          {hasPromo && (
-            <span className="font-mono text-[10px] text-neutral-500 line-through">
-              {regularPrice.toFixed(2)} €
-            </span>
-          )}
-        </div>
-
-        <button
-          onClick={handleOrderWhatsApp}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-extrabold text-white shadow-md active:scale-95 transition-transform"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span>Commander sur WhatsApp</span>
-        </button>
-      </div>
 
       <Footer />
       <AudioPreviewModal />
