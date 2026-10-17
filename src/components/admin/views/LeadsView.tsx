@@ -156,7 +156,12 @@ export const LeadsView: React.FC = () => {
       return;
     }
 
-    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(messageText.trim())}`;
+    // Repair previously saved J3 messages that still point to the old site domain.
+    const currentOrigin = window.location.origin;
+    const finalMessage = step === 'J3'
+      ? messageText.trim().replace(/https?:\\/\\/(?:vision-books\\.vercel\\.app|visionbooks\\.audio|vision-books-app\\.vercel\\.app)/gi, currentOrigin)
+      : messageText.trim();
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(finalMessage)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
 
     // Mark step as 'envoye'
