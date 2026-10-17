@@ -16,7 +16,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   onChange,
   label = 'Fichier de la ressource (Lead Magnet)',
   helpText = 'Sélectionnez un document PDF, MP3 ou archive depuis votre ordinateur',
-  accept = '.pdf,.mp3,.epub,.zip,.docx',
+  accept = '.pdf,.mp3,.epub,.zip,.docx,.txt',
   className = '',
 }) => {
   const [isUploading, setIsUploading] = useState(false);
