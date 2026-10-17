@@ -83,11 +83,9 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
       })
       .catch((err) => {
         if (isMounted) {
-          console.warn('Lead magnet not found via API, searching fallback:', err);
-          if (leadMagnets.length > 0) {
-            setLeadMagnet(leadMagnets[0]);
-            trackLeadMagnetView(leadMagnets[0].slug, `/lead-magnet/${leadMagnets[0].slug}`);
-          }
+          // Never replace a requested resource with an unrelated demo guide.
+          console.warn('Lead magnet not found for requested slug:', slug, err);
+          setLeadMagnet(null);
           setLoading(false);
         }
       });
@@ -131,7 +129,7 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
 
     try {
       const lmId = leadMagnet?.id || null;
-      const downloadPath = leadMagnet?.file_url || `/downloads/${leadMagnet?.slug || 'guide'}.pdf`;
+      const downloadPath = leadMagnet?.file_url || `/downloads/${leadMagnet?.slug || 'guide'}.txt`;
 
       // 1. Enregistrer le prospect
       const res = await addLead({
@@ -151,7 +149,8 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
       try {
         const link = document.createElement('a');
         link.href = effectiveDownloadUrl;
-        link.download = `${(leadMagnet?.slug || 'guide-visionbooks')}.pdf`;
+        const downloadExtension = effectiveDownloadUrl.split('?')[0].match(/\.(pdf|mp3|epub|zip|docx|txt)$/i)?.[1] || 'txt';
+        link.download = `${(leadMagnet?.slug || 'guide-visionbooks')}.${downloadExtension}`;
         link.target = '_blank';
         document.body.appendChild(link);
         link.click();
@@ -269,7 +268,7 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 antialiased selection:bg-amber-500 selection:text-neutral-950">
+    <div className="min-h-[100svh] bg-neutral-950 text-neutral-100 antialiased selection:bg-amber-500 selection:text-neutral-950">
       {/* Top Banner Navigation */}
       <header className="border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-md sticky top-0 z-30">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -301,7 +300,7 @@ export const LeadMagnetCapturePage: React.FC<LeadMagnetCapturePageProps> = ({ sl
       </header>
 
       {/* Main Landing Page Structure (11 sections requises) */}
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-16">
+      <main className="mx-auto max-w-6xl px-4 pt-5 pb-8 sm:px-6 sm:py-16 scroll-mt-20">
         <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
           {/* Left Column: Présentation & Contenu Marketing */}
           <div className="lg:col-span-7 space-y-8">

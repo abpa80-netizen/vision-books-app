@@ -2,11 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { Category, Product, Testimonial, BlogPost, Lead, LeadMagnet, AdminTab, VipPack } from '../types';
 import {
   INITIAL_CATEGORIES,
-  INITIAL_PRODUCTS,
   INITIAL_TESTIMONIALS,
   INITIAL_BLOG_POSTS,
-  INITIAL_LEADS,
-  INITIAL_LEAD_MAGNETS,
   INITIAL_VIP_PACK,
 } from '../data/initialData';
 import { api } from '../services/api';
@@ -37,8 +34,10 @@ import {
   subscribeVipPack,
   saveVipPackToFirestore,
   deleteVipPackFromFirestore,
-  seedFirestoreIfEmpty,
+  migrateLegacyProductAudioUrls,
 } from '../services/firestoreService';
+
+const publicProducts = (items: Product[]) => items.filter((product) => !/^prod-[1-6]$/.test(product.id));
 
 interface Toast {
   id: string;
@@ -195,13 +194,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // State initialized with robust initial data (no localStorage dependency)
   const [categories, setCategories] = useState<Category[]>(() => sortCategoriesStrategically(INITIAL_CATEGORIES));
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoadingLeads, setIsLoadingLeads] = useState<boolean>(true);
   const [leadsError, setLeadsError] = useState<string | null>(null);
-  const [leadMagnets, setLeadMagnets] = useState<LeadMagnet[]>(INITIAL_LEAD_MAGNETS);
+  const [leadMagnets, setLeadMagnets] = useState<LeadMagnet[]>([]);
   const [activePreviewProduct, setActivePreviewProduct] = useState<Product | null>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [vipPack, setVipPack] = useState<VipPack | null>(INITIAL_VIP_PACK);
@@ -232,7 +231,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCategories(sortCategoriesStrategically(dbCats));
       }
       if (dbProds && Array.isArray(dbProds) && dbProds.length > 0) {
-        setProducts(dbProds);
+        setProducts(publicProducts(dbProds));
       }
       if (dbLms && Array.isArray(dbLms) && dbLms.length > 0) {
         setLeadMagnets(dbLms);
@@ -261,12 +260,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // FIRESTORE REAL-TIME SYNCHRONIZATION & PERSISTENCE
   useEffect(() => {
-    // 1. Ensure Firestore is seeded with default documents if empty
-    seedFirestoreIfEmpty().catch((err) => console.warn('Firestore seed check:', err));
+    // Never seed public production data with demo books or demo lead magnets.
+    // Keep the existing private-audio migration, which only acts on existing records.
+    if (isAdmin) {
+      migrateLegacyProductAudioUrls()
+        .then((result) => {
+          if (result.migrated > 0) {
+            console.info(`[Firestore] Product privacy migration complete: ${result.migrated} products, ${result.privateUrlsMoved} private URLs moved.`);
+          }
+        })
+        .catch((migrationError) => {
+          console.error('[Firestore] Product privacy migration did not complete. Publish the updated Firestore rules, then reopen admin.', migrationError);
+        });
+    }
 
     // 2. Real-time Firestore Listeners
     const unsubProds = subscribeProducts((items) => {
-      if (items.length > 0) setProducts(items);
+      setProducts(publicProducts(items));
     }, isAdmin);
 
     const unsubCats = subscribeCategories((items) => {
@@ -923,7 +933,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     const lm = leadMagnets.find((m) => m.id === leadMagnetId);
-    let downloadUrl = lm?.file_url || lm?.download_url || '/downloads/guide-visionbooks.pdf';
+    let downloadUrl = lm?.file_url || lm?.download_url || '/downloads/guide-visionbooks.txt';
+    if (downloadUrl.startsWith('/downloads/') && downloadUrl.toLowerCase().endsWith('.pdf')) {
+      downloadUrl = downloadUrl.replace(/\.pdf$/i, '.txt');
+    }
     const leadMagnetTitle = lm?.title || leadData.lead_magnet_title || 'Guide offert';
 
     if (existingDup) {

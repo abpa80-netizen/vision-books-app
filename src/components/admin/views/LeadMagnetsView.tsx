@@ -51,7 +51,7 @@ export const LeadMagnetsView: React.FC = () => {
     image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
     description: '',
     benefitsText: '',
-    file_url: '/downloads/guide-visionbooks.pdf',
+    file_url: '/downloads/guide-visionbooks.txt',
     active: true,
     format: 'ebook' as 'ebook' | 'audiobook' | 'other',
     topic: '',
@@ -65,7 +65,7 @@ export const LeadMagnetsView: React.FC = () => {
 
   const handleCopyShareLink = (slug: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const fullUrl = `${origin}/lead-magnet/${slug}`;
+    const fullUrl = `${origin}/ressource/${slug}`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(fullUrl);
       showToast(`Lien de partage copié ! ${fullUrl}`, 'success');
@@ -82,7 +82,7 @@ export const LeadMagnetsView: React.FC = () => {
       image: '/assets/images/cover_financial_liberty_1790615544438.jpg',
       description: '',
       benefitsText: 'Guide stratégique complet et prêt à l\'emploi\nModèles mentaux et erreurs à éviter\nTemplate actionnable inclus',
-      file_url: '/downloads/ressource-gratuite.pdf',
+      file_url: '/downloads/guide-visionbooks.txt',
       active: true,
       format: 'ebook',
       topic: '',
@@ -163,6 +163,12 @@ export const LeadMagnetsView: React.FC = () => {
       benefits: benefitsArray,
       file_url: formData.file_url.trim(),
       active: formData.active,
+      format: formData.format,
+      topic: formData.topic.trim(),
+      target_audience: formData.target_audience.trim(),
+      raw_content: formData.raw_content.trim(),
+      hook: formData.hook.trim(),
+      cta_text: formData.cta_text.trim(),
     };
 
     if (editingLm) {
@@ -352,7 +358,7 @@ export const LeadMagnetsView: React.FC = () => {
                   {/* Slug Pill */}
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] text-neutral-300">
                     <span className="truncate rounded bg-neutral-950/80 px-2 py-0.5 font-mono text-neutral-300 backdrop-blur-sm border border-neutral-800">
-                      /lead-magnet/{lm.slug}
+                      /ressource/{lm.slug}
                     </span>
                   </div>
                 </div>
@@ -397,7 +403,7 @@ export const LeadMagnetsView: React.FC = () => {
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-amber-300">Lien de partage :</span>
                       <span className="font-mono text-[10px] text-neutral-400 truncate max-w-[130px]">
-                        /lead-magnet/{lm.slug}
+                        /ressource/{lm.slug}
                       </span>
                     </div>
                     <button
@@ -427,7 +433,7 @@ export const LeadMagnetsView: React.FC = () => {
                     </div>
 
                     <button
-                      onClick={() => navigateTo(`/lead-magnet/${lm.slug}`)}
+                      onClick={() => navigateTo(`/ressource/${lm.slug}`)}
                       className="flex items-center gap-1 text-[11px] font-medium text-amber-400 hover:text-amber-300 transition-colors"
                       title="Tester la page de capture"
                     >
@@ -506,8 +512,8 @@ export const LeadMagnetsView: React.FC = () => {
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm">
-          <div className="relative my-8 w-full max-w-xl rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain bg-black/80 p-2 sm:p-4 backdrop-blur-sm">
+          <div className="relative my-2 sm:my-8 w-full max-w-xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border border-neutral-800 bg-neutral-950 p-4 sm:p-6 shadow-2xl">
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute right-4 top-4 rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-900 hover:text-white"
@@ -557,10 +563,10 @@ export const LeadMagnetsView: React.FC = () => {
               {/* Slug */}
               <div>
                 <label className="block font-medium text-neutral-300">
-                  Slug URL publique (ex: /lead-magnet/[slug]) *
+                  Identifiant du lien public (ex: guide-liberte-financiere) *
                 </label>
                 <div className="mt-1.5 flex items-center rounded-lg border border-neutral-800 bg-neutral-900 pl-3 focus-within:border-amber-500">
-                  <span className="font-mono text-neutral-500">/lead-magnet/</span>
+                  <span className="font-mono text-neutral-500">/ressource/</span>
                   <input
                     type="text"
                     required
@@ -609,7 +615,7 @@ export const LeadMagnetsView: React.FC = () => {
                   onChange={(url) => setFormData({ ...formData, file_url: url })}
                   label="Fichier du Lead Magnet (PDF, ZIP, Document) *"
                   helpText="Téléversez le fichier que le prospect recevra immédiatement après inscription"
-                  accept=".pdf,.zip,.epub,.mp3,.docx"
+                  accept=".pdf,.zip,.epub,.mp3,.docx,.txt"
                 />
               </div>
 

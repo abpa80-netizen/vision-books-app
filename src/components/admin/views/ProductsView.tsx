@@ -110,6 +110,7 @@ export const ProductsView: React.FC = () => {
   const [aiAuthor, setAiAuthor] = useState('');
   const [aiCategory, setAiCategory] = useState('');
   const [aiBonus, setAiBonus] = useState('');
+  const [aiHints, setAiHints] = useState('');
   const [aiSuggestedCategory, setAiSuggestedCategory] = useState<CategorySuggestion | null>(null);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [aiGeneratedData, setAiGeneratedData] = useState<{
@@ -220,6 +221,7 @@ export const ProductsView: React.FC = () => {
     setAiAuthor(author);
     setAiCategory(category);
     setAiBonus(bonus);
+    setAiHints(fullDescription || shortDescription || productDetails || '');
     setAiSuggestedCategory(null);
     setIsAiModalOpen(true);
   };
@@ -242,6 +244,7 @@ export const ProductsView: React.FC = () => {
         author: aiAuthor.trim(),
         category: aiCategory || category,
         bonus: aiBonus.trim(),
+        hints: aiHints.trim(),
         existing_categories: categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
       });
 
@@ -1290,8 +1293,8 @@ export const ProductsView: React.FC = () => {
       {/* MODAL DU GÉNÉRATEUR IA DE PRODUIT                        */}
       {/* ======================================================== */}
       {isAiModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md overflow-y-auto">
-          <div className="relative my-8 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border-2 border-amber-500/40 bg-neutral-950 p-6 sm:p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center bg-black/90 p-2 sm:p-4 backdrop-blur-md overflow-y-auto overscroll-contain">
+          <div className="relative my-2 sm:my-8 max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border-2 border-amber-500/40 bg-neutral-950 p-4 sm:p-8 shadow-2xl">
             {/* Close button */}
             <button
               type="button"
@@ -1311,7 +1314,7 @@ export const ProductsView: React.FC = () => {
               Générateur IA de Fiche Produit
             </h3>
             <p className="mt-1 text-xs text-neutral-400 leading-relaxed">
-              Renseignez les 4 paramètres pour générer une description captivante, 3 bénéfices auditeurs, la valorisation du bonus, un texte marketing court et un CTA de conversion.
+              Ajoutez le sujet réel du livre pour obtenir une fiche éditoriale détaillée, personnalisée et prête à relire.
             </p>
 
             {/* PARAMÈTRES FOURNIS PAR L'ADMINISTRATEUR */}
@@ -1349,6 +1352,19 @@ export const ProductsView: React.FC = () => {
                     className="mt-1.5 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3.5 py-2 text-white placeholder-neutral-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-medium text-neutral-300">
+                  Sujet, résumé ou idées principales du livre (recommandé)
+                </label>
+                <textarea
+                  rows={3}
+                  value={aiHints}
+                  onChange={(e) => setAiHints(e.target.value)}
+                  placeholder="Décrivez le thème du livre, le problème qu'il traite, les idées principales ou collez un résumé fiable. Plus ce contexte est précis, plus la fiche sera pertinente."
+                  className="mt-1.5 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3.5 py-2 text-white placeholder-neutral-500 focus:border-amber-500 focus:outline-none"
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

@@ -12,9 +12,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { trackLeadMagnetDownload } from '../../services/analytics';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 export const ThankYouPage: React.FC = () => {
-  const { navigateTo } = useApp();
+  const { navigateTo, settings } = useApp();
+  const whatsappPhone = normalizeBusinessWhatsApp(settings?.whatsapp_number);
 
   const [leadInfo, setLeadInfo] = useState<{
     firstName?: string;
@@ -50,13 +52,13 @@ export const ThankYouPage: React.FC = () => {
     } catch {}
   }, [downloadTriggered]);
 
-  // Automatic countdown redirection to main sales page (homepage)
+  // Return visitors to the real Best-Sellers section after the free resource download.
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigateTo('/');
+          window.location.assign('/#bestsellers');
           return 0;
         }
         return prev - 1;
@@ -67,7 +69,7 @@ export const ThankYouPage: React.FC = () => {
   }, [navigateTo]);
 
   const handleManualDownload = () => {
-    const targetUrl = leadInfo.downloadUrl || '/downloads/guide-visionbooks.pdf';
+    const targetUrl = leadInfo.downloadUrl || '/downloads/guide-visionbooks.txt';
     trackLeadMagnetDownload(leadInfo.whatsapp || 'lead', '/merci');
     const link = document.createElement('a');
     link.href = targetUrl;
@@ -178,22 +180,24 @@ export const ThankYouPage: React.FC = () => {
           </div>
 
           {/* WhatsApp Direct Option */}
-          <div className="mt-6 text-center">
-            <a
-              href="https://wa.me/?text=Bonjour%20VISION%20BOOKS,%20je%20viens%20de%20t%C3%A9l%C3%A9charger%20votre%20guide%20gratuit%20!"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              <span>Échanger avec un conseiller sur WhatsApp</span>
-            </a>
-          </div>
+          {whatsappPhone.length >= 8 && (
+            <div className="mt-6 text-center">
+              <a
+                href={'https://wa.me/' + whatsappPhone + '?text=Bonjour%20VISION%20BOOKS%2C%20je%20viens%20de%20t%C3%A9l%C3%A9charger%20votre%20guide%20gratuit%20!'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Échanger avec un conseiller sur WhatsApp</span>
+              </a>
+            </div>
+          )}
 
           {/* Trust Footnote */}
           <div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-neutral-500">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            <span>VISION BOOKS • Téléchargement direct certifié et sécurisé.</span>
+            <span>VISION BOOKS • Ressource gratuite téléchargeable.</span>
           </div>
         </div>
       </main>

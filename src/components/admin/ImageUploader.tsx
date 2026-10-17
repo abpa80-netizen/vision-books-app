@@ -42,13 +42,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const handleFileProcess = async (file: File) => {
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!['jpg', 'jpeg', 'png', 'webp'].includes(file.name.split('.').pop()?.toLowerCase() || '')) {
       setErrorMessage('Veuillez sélectionner un fichier image valide (JPG, PNG, WebP).');
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
-      setErrorMessage('L\'image dépasse la taille maximale autorisée (25 Mo).');
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('L\'image dépasse la taille maximale autorisée (5 Mo).');
       return;
     }
 
@@ -56,18 +56,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     setIsUploading(true);
 
     try {
-      const result = await api.uploadFile(file);
+      const result = await api.uploadImage(file);
       onChange(result.url);
     } catch (err: any) {
       console.error('Image upload failed:', err);
-      // Fallback: load as local base64 so user can continue without blocking
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          onChange(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      setErrorMessage(err?.message || "Le téléversement a échoué. Vérifiez la configuration Firebase Storage puis réessayez.");
     } finally {
       setIsUploading(false);
     }
@@ -117,7 +110,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/jpg,image/svg+xml"
+        accept="image/png,image/jpeg,image/webp,image/jpg"
         onChange={handleFileChange}
         className="hidden"
       />

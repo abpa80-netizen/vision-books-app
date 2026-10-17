@@ -1,30 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, X, RotateCcw, RotateCw, CheckCircle, Headphones, Gift } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { SafeImage } from '../common/SafeImage';
 
 export const AudioPreviewModal: React.FC = () => {
   const { activePreviewProduct, setActivePreviewProduct, showToast, navigateTo } = useApp();
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(14);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(120);
   const [isMuted, setIsMuted] = useState(false);
-  const totalDuration = 120; // 2 minutes sample
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const rawAudioSrc = activePreviewProduct?.audio_url || activePreviewProduct?.audioPreviewUrl || '';
+  const audioSrc = rawAudioSrc.includes('coffee_shop.ogg') ? '' : rawAudioSrc;
+  const totalDuration = duration;
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isPlaying && activePreviewProduct) {
-      timer = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= totalDuration) {
-            setIsPlaying(false);
-            return totalDuration;
-          }
-          return prev + 1;
-        });
-      }, 1000);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(120);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.muted = false;
     }
-    return () => clearInterval(timer);
-  }, [isPlaying, activePreviewProduct]);
+    setIsMuted(false);
+  }, [activePreviewProduct?.id]);
+
+  const toggleAudio = async () => {
+    if (!audioRef.current || !audioSrc) {
+      showToast("Aucun extrait audio n’a encore été ajouté pour ce titre.", "info");
+      return;
+    }
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+    try {
+      await audioRef.current.play();
+      setIsPlaying(true);
+    } catch (error) {
+      console.warn("Audio preview could not start:", error);
+      setIsPlaying(false);
+      showToast("Impossible de lire cet extrait. Vérifiez le fichier audio.", "error");
+    }
+  };
+
+  const handleAudioTimeUpdate = () => {
+    if (!audioRef.current) return;
+    setCurrentTime(audioRef.current.currentTime);
+    if (Number.isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
+      setDuration(audioRef.current.duration);
+    }
+  };
 
   if (!activePreviewProduct) return null;
 
@@ -41,6 +69,16 @@ export const AudioPreviewModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+      <audio
+        ref={audioRef}
+        src={audioSrc || undefined}
+        onTimeUpdate={handleAudioTimeUpdate}
+        onLoadedMetadata={() => {
+          if (audioRef.current && Number.isFinite(audioRef.current.duration)) setDuration(audioRef.current.duration);
+        }}
+        onEnded={() => setIsPlaying(false)}
+        preload={audioSrc ? "metadata" : "none"}
+      />
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-2xl">
         {/* Close Button */}
         <button
@@ -54,7 +92,7 @@ export const AudioPreviewModal: React.FC = () => {
         {/* Top Info */}
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
           <Headphones className="h-4 w-4" />
-          <span>Extrait Découverte Studio HD</span>
+          <span>{audioSrc ? "Extrait audio découverte" : "Présentation du livre"}</span>
         </div>
 
         {/* Book Presentation */}
@@ -85,13 +123,19 @@ export const AudioPreviewModal: React.FC = () => {
           </div>
         </div>
 
+        {!audioSrc && (
+          <p className="mt-4 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 text-xs leading-relaxed text-neutral-300">
+            Aucun extrait audio n’a encore été ajouté pour ce titre. Vous pouvez consulter sa fiche et découvrir son contenu avant de commander.
+          </p>
+        )}
+
         {/* Dynamic Waveform Display */}
         <div className="mt-6 flex h-14 items-center justify-between gap-1 rounded-xl bg-neutral-900/80 px-4 py-2">
           {[20, 45, 70, 95, 60, 40, 80, 100, 75, 50, 85, 60, 40, 90, 100, 70, 45, 60, 80, 50, 65, 90, 80, 45, 60, 85, 95, 65, 40, 60, 30].map(
             (val, i) => {
               const progressFraction = currentTime / totalDuration;
               const barFraction = i / 31;
-              const isPast = barFraction <= progressFraction;
+              const isPast = Boolean(audioSrc) && barFraction <= progressFraction;
               return (
                 <div
                   key={i}
@@ -99,7 +143,7 @@ export const AudioPreviewModal: React.FC = () => {
                     isPast ? 'bg-amber-400' : 'bg-neutral-700'
                   }`}
                   style={{
-                    height: `${isPlaying ? Math.max(12, val * (isPast ? 0.45 : 0.35)) : 10}px`,
+                    height: `${audioSrc && isPlaying ? Math.max(12, val * (isPast ? 0.45 : 0.35)) : 10}px`,
                   }}
                 />
               );
@@ -117,7 +161,12 @@ export const AudioPreviewModal: React.FC = () => {
         {/* Player Controls */}
         <div className="mt-4 flex items-center justify-between border-t border-neutral-800/80 pt-4">
           <button
-            onClick={() => setIsMuted(!isMuted)}
+            disabled={!audioSrc}
+            onClick={() => {
+              const nextMuted = !isMuted;
+              setIsMuted(nextMuted);
+              if (audioRef.current) audioRef.current.muted = nextMuted;
+            }}
             className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-900 hover:text-white"
             title={isMuted ? 'Activer le son' : 'Couper le son'}
           >
@@ -126,7 +175,13 @@ export const AudioPreviewModal: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setCurrentTime((t) => Math.max(0, t - 10))}
+              disabled={!audioSrc}
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+                  setCurrentTime(audioRef.current.currentTime);
+                }
+              }}
               className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-900 hover:text-white"
               title="Reculer de 10s"
             >
@@ -134,7 +189,8 @@ export const AudioPreviewModal: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={toggleAudio}
+              disabled={!audioSrc}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 text-neutral-950 shadow-lg hover:scale-105 active:scale-95 transition-transform"
             >
               {isPlaying ? (
@@ -145,7 +201,13 @@ export const AudioPreviewModal: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setCurrentTime((t) => Math.min(totalDuration, t + 10))}
+              disabled={!audioSrc}
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = Math.min(totalDuration, audioRef.current.currentTime + 10);
+                  setCurrentTime(audioRef.current.currentTime);
+                }
+              }}
               className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-900 hover:text-white"
               title="Avancer de 10s"
             >

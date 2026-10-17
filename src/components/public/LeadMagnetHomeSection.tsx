@@ -119,7 +119,9 @@ export const LeadMagnetHomeSection: React.FC = () => {
     try {
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${activeMagnet.slug || 'guide-offert'}.pdf`;
+      const sourceExtension = url.split('?')[0].split('.').pop()?.toLowerCase() || 'txt';
+      const safeExtension = ['pdf', 'mp3', 'epub', 'zip', 'docx', 'txt'].includes(sourceExtension) ? sourceExtension : 'txt';
+      link.download = `${activeMagnet.slug || 'guide-offert'}.${safeExtension}`;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
@@ -164,7 +166,7 @@ export const LeadMagnetHomeSection: React.FC = () => {
         res.download_url ||
         activeMagnet.file_url ||
         activeMagnet.download_url ||
-        '/downloads/guide-visionbooks.pdf';
+        '/downloads/guide-visionbooks.txt';
 
       trackLeadMagnetDownload(whatsapp.trim(), '/');
 

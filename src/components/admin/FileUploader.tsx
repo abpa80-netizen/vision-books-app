@@ -16,7 +16,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   onChange,
   label = 'Fichier de la ressource (Lead Magnet)',
   helpText = 'Sélectionnez un document PDF, MP3 ou archive depuis votre ordinateur',
-  accept = '.pdf,.mp3,.epub,.zip,.docx',
+  accept = '.pdf,.mp3,.epub,.zip,.docx,.txt',
   className = '',
 }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -47,8 +47,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       onChange(result.url);
     } catch (err: any) {
       console.error('File upload error:', err);
-      // Fallback
-      onChange(`/downloads/${file.name}`);
+      setErrorMessage(err?.message || "Le téléversement a échoué. Vérifiez la configuration du stockage puis réessayez.");
     } finally {
       setIsUploading(false);
     }

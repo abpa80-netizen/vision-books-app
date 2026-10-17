@@ -16,6 +16,7 @@ import {
 import { api } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import { SafeImage } from '../common/SafeImage';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 interface ChatMessage {
   id: string;
@@ -43,7 +44,7 @@ const STARTER_SUGGESTIONS = [
 ];
 
 export const CommercialAssistant: React.FC = () => {
-  const { navigateTo, settings, currentPath } = useApp();
+  const { navigateTo, settings, currentPath, products, vipPack } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,7 +100,26 @@ export const CommercialAssistant: React.FC = () => {
         content: m.content,
       }));
 
-      const response = await api.chatWithAssistant(apiPayload);
+      const safeCatalogue = products
+        .filter((product) => product.is_active)
+        .slice(0, 40)
+        .map((product) => ({
+          id: product.id,
+          title: product.title,
+          author: product.author,
+          slug: product.slug,
+          category: product.category,
+          cover: product.cover || product.coverUrl,
+          short_description: product.short_description,
+          normal_price: product.normal_price,
+          sale_price: product.sale_price,
+        }));
+
+      const response = await api.chatWithAssistant(apiPayload, {
+        whatsappNumber: normalizeBusinessWhatsApp(settings.whatsapp_number),
+        hasActiveVipPack: Boolean(vipPack && (vipPack as any).is_active !== false && (vipPack as any).active !== false),
+        catalogue: safeCatalogue,
+      });
 
       const assistantMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -116,9 +136,7 @@ export const CommercialAssistant: React.FC = () => {
         id: `err-${Date.now()}`,
         role: 'assistant',
         content:
-          "Je vous prie de m'excuser, notre service de conseil IA est momentanément ralenti. Vous pouvez échanger directement avec notre équipe humaine sur WhatsApp au " +
-          (settings.whatsapp_number || '+33 6 12 34 56 78') +
-          " pour recevoir des conseils personnalisés ou un extrait offert !",
+          "Je vous prie de m'excuser, notre service de conseil IA est momentanément indisponible. Vous pouvez utiliser le bouton WhatsApp du site si le contact est configuré, ou parcourir les fiches du catalogue pour trouver un livre adapté à votre objectif.",
         timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackErrorMessage]);
@@ -132,17 +150,34 @@ export const CommercialAssistant: React.FC = () => {
     setInputMessage('');
   };
 
-  const whatsappNumber = settings.whatsapp_number || '+33 6 12 34 56 78';
-  const cleanPhone = whatsappNumber.replace(/[^0-9+]/g, '');
+  const cleanPhone = normalizeBusinessWhatsApp(settings.whatsapp_number);
 
   const openWhatsAppGeneral = () => {
+    if (cleanPhone.length < 8) {
+      setMessages((prev) => [...prev, {
+        id: `config-${Date.now()}`,
+        role: 'assistant',
+        content: "Le contact WhatsApp n’est pas encore configuré. Vous pouvez parcourir le catalogue et ouvrir la fiche du livre qui vous intéresse.",
+        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      }]);
+      return;
+    }
     const text = encodeURIComponent("Bonjour VISION BOOKS, je souhaite avoir des conseils sur vos livres audio.");
-    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${text}`, '_blank');
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
   };
 
   const openWhatsAppProduct = (title: string) => {
+    if (cleanPhone.length < 8) {
+      setMessages((prev) => [...prev, {
+        id: `config-product-${Date.now()}`,
+        role: 'assistant',
+        content: "Le contact WhatsApp n’est pas encore configuré. Ouvrez la fiche du livre pour consulter ses informations.",
+        timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      }]);
+      return;
+    }
     const text = encodeURIComponent(`Bonjour VISION BOOKS, je souhaite commander le livre audio « ${title} ».`);
-    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${text}`, '_blank');
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
   };
 
   // Helper to parse simple markdown formatting in assistant responses (bold, links)
@@ -476,7 +511,7 @@ export const CommercialAssistant: React.FC = () => {
               className="shrink-0 flex items-center gap-1 font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
             >
               <MessageCircle className="h-3 w-3" />
-              <span>WhatsApp ({whatsappNumber})</span>
+              <span>Contacter sur WhatsApp</span>
             </button>
           </div>
 

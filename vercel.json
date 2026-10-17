@@ -21,10 +21,6 @@
       "destination": "/assets/images/$1"
     },
     {
-      "source": "/uploads/(.*)",
-      "destination": "/assets/images/cover_business_empire_1790615532791.jpg"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -31,25 +31,40 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // 2. Products collection
+    // 2. Private admin catalogue: never readable by public visitors.
     match /products/{productId} {
-      allow read: if (resource == null || resource.data.get('is_active', true) == true) || isAdmin();
+      allow read, write: if isAdmin();
+    }
+
+    // 3. Sanitized public product copies contain no paid download URL.
+    match /products_public/{productId} {
+      allow read: if resource.data.get('is_active', true) == true || isAdmin();
       allow write: if isAdmin();
     }
 
-    // 3. Categories collection
+    // Paid audio download URLs are isolated from every public document.
+    match /product_private/{productId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Migration state is admin-only.
+    match /system_migrations/{migrationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 4. Categories collection
     match /categories/{categoryId} {
       allow read: if (resource == null || resource.data.get('is_active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
-    // 4. Lead Magnets collection
+    // 5. Lead Magnets collection
     match /lead_magnets/{leadMagnetId} {
       allow read: if (resource == null || resource.data.get('active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
-    // 5. Leads collection (Confidentiality: Public can create, only admin can read/manage)
+    // 6. Leads collection (Confidentiality: Public can create, only admin can read/manage)
     match /leads/{leadId} {
       allow create: if (request.resource.data.first_name is string &&
                        request.resource.data.first_name.size() > 0 &&
@@ -60,32 +75,32 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // 6. Testimonials collection
+    // 7. Testimonials collection
     match /testimonials/{testimonialId} {
       allow read: if (resource == null || resource.data.get('is_active', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
-    // 7. Blog Posts collection
+    // 8. Blog Posts collection
     match /blog_posts/{postId} {
       allow read: if (resource == null || resource.data.get('is_published', true) == true) || isAdmin();
       allow write: if isAdmin();
     }
 
-    // 8. Settings collection
+    // 9. Settings collection
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 9. Analytics collection
+    // 10. Analytics collection
     match /analytics/{eventId} {
       allow create: if request.resource.data.event_type is string &&
                        request.resource.data.page is string;
       allow read, update, delete: if isAdmin();
     }
 
-    // 10. VIP Packs collection
+    // 11. VIP Packs collection
     match /vip_packs/{vipPackId} {
       allow read: if true;
       allow write: if isAdmin();

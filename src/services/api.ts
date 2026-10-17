@@ -1,5 +1,6 @@
 import { Category, Product, VipPack, Lead, LeadMagnetMarketingContent, CategorySuggestion } from '../types';
-import { auth } from '../lib/firebase';
+import { auth, storage } from '../lib/firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
@@ -21,30 +22,83 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 export const api = {
   // File / Image upload
   async uploadFile(file: File): Promise<{ url: string; filename: string; size: number }> {
-    const base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filename: file.name,
-        type: file.type,
-        data: base64,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Erreur lors du téléversement' }));
-      throw new Error(err.error || 'Erreur lors du téléversement');
+    const user = auth.currentUser;
+    if (!user || user.email?.toLowerCase() !== 'barkissac80@gmail.com' || !user.emailVerified) {
+      throw new Error("Connectez-vous avec le compte administrateur vérifié pour téléverser une ressource.");
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      throw new Error("Le fichier dépasse la limite de 100 Mo.");
     }
 
-    return res.json();
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const mimeByExtension: Record<string, string> = {
+      pdf: 'application/pdf',
+      mp3: 'audio/mpeg',
+      epub: 'application/epub+zip',
+      zip: 'application/zip',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      txt: 'text/plain',
+    };
+    const allowedTypes = Object.values(mimeByExtension);
+    const detectedType = file.type || 'application/octet-stream';
+    const contentType = allowedTypes.includes(detectedType) ? detectedType : (mimeByExtension[extension] || detectedType);
+    if (!allowedTypes.includes(contentType)) {
+      throw new Error("Format non pris en charge. Utilisez PDF, MP3, EPUB, ZIP, DOCX ou TXT.");
+    }
+
+    const safeName = file.name
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(-100) || 'ressource';
+    const objectPath = `lead-magnets/${user.uid}/${Date.now()}-${safeName}`;
+    const objectRef = ref(storage, objectPath);
+    const uploaded = await uploadBytes(objectRef, file, {
+      contentType,
+      customMetadata: { uploadedBy: user.uid },
+    });
+    const url = await getDownloadURL(uploaded.ref);
+
+    return { url, filename: safeName, size: file.size };
   },
+  async uploadImage(file: File): Promise<{ url: string; filename: string; size: number }> {
+    const user = auth.currentUser;
+    if (!user || user.email?.toLowerCase() !== 'barkissac80@gmail.com' || !user.emailVerified) {
+      throw new Error("Connectez-vous avec le compte administrateur vérifié pour téléverser une image.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("L’image dépasse la limite de 5 Mo.");
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const mimeByExtension: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
+    const contentType = mimeByExtension[extension] || file.type;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(contentType)) {
+      throw new Error("Format d’image non pris en charge. Utilisez JPG, PNG ou WebP.");
+    }
+
+    const safeName = file.name
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(-100) || 'image';
+    const objectPath = `site-images/${user.uid}/${Date.now()}-${safeName}`;
+    const objectRef = ref(storage, objectPath);
+    const uploaded = await uploadBytes(objectRef, file, {
+      contentType,
+      customMetadata: { uploadedBy: user.uid },
+    });
+    const url = await getDownloadURL(uploaded.ref);
+    return { url, filename: safeName, size: file.size };
+  },
+
   // Categories
   async getCategories(activeOnly = false): Promise<Category[]> {
     const res = await fetch(`/api/categories${activeOnly ? '?active_only=true' : ''}`);
@@ -165,6 +219,7 @@ export const api = {
     author: string;
     category?: string;
     bonus?: string;
+    hints?: string;
     existing_categories?: Array<{ id: string; name: string; slug: string }>;
   }): Promise<{
     full_description: string;
@@ -317,6 +372,8 @@ export const api = {
     whatsapp: string;
     lead_magnet_id?: string | null;
     lead_magnet_title?: string;
+    lead_magnet_content?: string;
+    recommended_product?: { id: string; title: string; author?: string; slug: string; normal_price?: number; sale_price?: number | null; audio_preview_available?: boolean } | null;
     lead_id?: string;
     step?: 'J1' | 'J2' | 'J3' | 'all';
   }): Promise<{
@@ -550,7 +607,24 @@ export const api = {
   },
 
   // Gemini Commercial Assistant
-  async chatWithAssistant(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<{
+  async chatWithAssistant(
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    context: {
+      whatsappNumber?: string;
+      hasActiveVipPack?: boolean;
+      catalogue?: Array<{
+        id: string;
+        title: string;
+        author: string;
+        slug: string;
+        category?: string;
+        cover?: string;
+        short_description?: string;
+        normal_price?: number;
+        sale_price?: number | null;
+      }>;
+    } = {},
+  ): Promise<{
     message: string;
     suggestedProducts?: Array<{
       id: string;
@@ -568,7 +642,7 @@ export const api = {
     const res = await fetch('/api/assistant/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, ...context }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

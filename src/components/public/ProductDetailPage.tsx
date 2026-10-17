@@ -7,7 +7,6 @@ import { AudioPreviewModal } from './AudioPreviewModal';
 import { SafeImage } from '../common/SafeImage';
 import {
   ArrowLeft,
-  Star,
   CheckCircle2,
   Gift,
   Headphones,
@@ -31,6 +30,7 @@ import {
 import { Product } from '../../types';
 import { api } from '../../services/api';
 import { trackProductView, trackWhatsAppClick } from '../../services/analytics';
+import { normalizeBusinessWhatsApp } from '../../utils/whatsapp';
 
 interface ProductDetailPageProps {
   slug: string;
@@ -78,7 +78,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Audio source URL
-  const audioSrc = product?.audio_url || product?.audioPreviewUrl || 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg';
+  const rawAudioSrc = product?.audio_url || product?.audioPreviewUrl || '';
+  const audioSrc = rawAudioSrc.includes('coffee_shop.ogg') ? '' : rawAudioSrc;
+  const hasAudioPreview = Boolean(audioSrc);
 
   useEffect(() => {
     // Reset audio state when product changes
@@ -98,7 +100,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
   }, [product?.id, product?.slug]);
 
   const togglePlayAudio = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !audioSrc) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -107,7 +109,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
         setIsPlaying(true);
       }).catch((e) => {
         console.warn('Audio play prevented:', e);
-        setIsPlaying(true); // fallback visual feedback
+        setIsPlaying(false);
       });
     }
   };
@@ -154,14 +156,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
 
   // Urgence Marketing configurable
   const isUrgencyActive = useMemo(() => {
-    if (!product?.urgency_active) return false;
-    if (product.urgency_end_date) {
-      const end = new Date(product.urgency_end_date).getTime();
-      if (!isNaN(end) && end < Date.now()) {
-        return false;
-      }
-    }
-    return true;
+    if (!product?.urgency_active || !product.urgency_end_date) return false;
+    const end = new Date(product.urgency_end_date).getTime();
+    return Number.isFinite(end) && end > Date.now();
   }, [product?.urgency_active, product?.urgency_end_date]);
 
   // Format du produit (Livre audio, Ebook, Autre format)
@@ -190,7 +187,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug }) =>
       }
     }
 
-    const cleanPhone = (rawPhone || '').replace(/[^0-9]/g, '');
+    const cleanPhone = normalizeBusinessWhatsApp(rawPhone);
     if (!cleanPhone) {
       showToast('Le numéro WhatsApp de commande n\'est pas encore configuré dans les paramètres.', 'error');
       return;
@@ -273,10 +270,10 @@ ${productUrl}`;
     Array.isArray(product.key_points) && product.key_points.length > 0
       ? product.key_points
       : (product.keyTakeaways || [
-          'Maîtrise des principes fondamentaux et stratégies concrètes applicables immédiatement',
-          'Méthodes éprouvées pour débloquer votre plein potentiel professionnel et financier',
-          'Études de cas réelles et retours d’expérience pour éviter les erreurs coûteuses',
-          'Plan d’action par étapes structuré pour implémenter chaque leçon au quotidien',
+          'Découvrez les idées principales et les concepts abordés dans cet ouvrage.',
+          'Identifiez des pistes de réflexion à adapter à votre situation.',
+          'Explorez les thèmes et méthodes présentés par l’auteur.',
+          'Choisissez les enseignements que vous souhaitez approfondir.',
         ]);
 
   return (
@@ -286,10 +283,10 @@ ${productUrl}`;
       {/* Hidden audio element for in-page playback */}
       <audio
         ref={audioRef}
-        src={audioSrc}
+        src={audioSrc || undefined}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}
-        preload="metadata"
+        preload={audioSrc ? "metadata" : "none"}
       />
 
       <main className="flex-1 pb-24 sm:pb-32">
@@ -356,7 +353,7 @@ ${productUrl}`;
                       {(product.is_best_seller || product.isBestSeller) ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-neutral-950 shadow-lg">
                           <Award className="h-3.5 w-3.5" />
-                          <span>Best-Seller N°1</span>
+                          <span>Best-Seller</span>
                         </span>
                       ) : (
                         <div />
@@ -382,6 +379,7 @@ ${productUrl}`;
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
                     <button
                       onClick={togglePlayAudio}
+                      disabled={!hasAudioPreview}
                       className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 text-neutral-950 shadow-2xl transition-transform hover:scale-110 active:scale-95"
                       title={isPlaying ? "Mettre en pause" : "Écouter l'extrait audio"}
                     >
@@ -422,12 +420,12 @@ ${productUrl}`;
                         <Headphones className="h-4 w-4" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white">Extrait Audio Disponible</div>
-                        <div className="text-[10px] text-neutral-400">Mastering studio HD • Écoute immédiate</div>
+                        <div className="text-xs font-bold text-white">{hasAudioPreview ? "Extrait audio disponible" : "Extrait audio non disponible"}</div>
+                        <div className="text-[10px] text-neutral-400">{hasAudioPreview ? "Extrait audio • Écoute immédiate" : "Consultez la fiche pour découvrir le contenu du livre."}</div>
                       </div>
                     </div>
                     <span className="font-mono text-xs text-amber-400 font-semibold tabular-nums">
-                      {formatTime(currentTime)} / {formatTime(duration)}
+                      {formatTime(currentTime)} / {hasAudioPreview ? formatTime(duration) : '--:--'}
                     </span>
                   </div>
 
@@ -439,6 +437,7 @@ ${productUrl}`;
                       max={duration || 120}
                       value={currentTime}
                       onChange={handleSeek}
+                      disabled={!hasAudioPreview}
                       className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
                     />
                   </div>
@@ -448,6 +447,7 @@ ${productUrl}`;
                     <div className="flex items-center gap-3">
                       <button
                         onClick={togglePlayAudio}
+                        disabled={!hasAudioPreview}
                         className="flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-neutral-950 transition-all hover:bg-amber-400 active:scale-95 shadow-sm"
                       >
                         {isPlaying ? (
@@ -472,6 +472,7 @@ ${productUrl}`;
                     </div>
 
                     <button
+                      disabled={!hasAudioPreview}
                       onClick={() => {
                         if (audioRef.current) {
                           audioRef.current.muted = !isMuted;
@@ -525,16 +526,7 @@ ${productUrl}`;
                     </a>
                   )}
 
-                  {/* Rating Score */}
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-300">
-                    <div className="flex text-amber-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                    <span className="font-bold text-white">4.9 / 5</span>
-                    <span className="text-neutral-500">(+240 avis vérifiés)</span>
-                  </div>
+
                 </div>
 
                 {/* Grand Titre */}
@@ -546,15 +538,20 @@ ${productUrl}`;
                 <div className="mt-3 flex items-center gap-2 text-sm text-neutral-300">
                   <span>Par</span>
                   <span className="font-bold text-white">{product.author}</span>
-                  <span className="rounded bg-neutral-800 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                    Auteur Référent
-                  </span>
                 </div>
 
                 {/* Description courte d'accroche */}
                 <p className="mt-4 text-sm sm:text-base leading-relaxed text-neutral-300">
                   {product.short_description || product.summary}
                 </p>
+                {product.full_description && (
+                  <div className="mt-4 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4 sm:p-5 space-y-3 text-sm leading-relaxed text-neutral-300">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-amber-400">Présentation détaillée</h2>
+                    {product.full_description.split('\n\n').map((paragraph, idx) => (
+                      <p key={idx}>{paragraph}</p>
+                    ))}
+                  </div>
+                )}
 
                 {/* Urgence Commerciale si configurée et active */}
                 {isUrgencyActive && (
@@ -578,120 +575,7 @@ ${productUrl}`;
                   </div>
                 )}
 
-                {/* ========================================================= */}
-                {/* PRIX ULTRA VISIBLE & BLOC DE COMMANDE                     */}
-                {/* ========================================================= */}
-                <div className="mt-6 rounded-3xl border-2 border-amber-500/40 bg-gradient-to-br from-neutral-900 via-neutral-900 to-amber-950/20 p-6 sm:p-7 shadow-2xl">
-                  {/* Pricing row */}
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 border-b border-neutral-800 pb-5">
-                    <div>
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                        {hasPromo ? 'Tarif promotionnel de lancement' : 'Tarif standard'}
-                      </div>
-                      <div className="mt-1 flex items-baseline gap-3">
-                        {hasPromo ? (
-                          <>
-                            <span className="font-mono text-4xl sm:text-5xl font-extrabold text-amber-400 tabular-nums">
-                              {currentPrice.toFixed(2)} €
-                            </span>
-                            <span className="font-mono text-xl sm:text-2xl text-neutral-500 line-through tabular-nums">
-                              {regularPrice.toFixed(2)} €
-                            </span>
-                          </>
-                        ) : (
-                          <span className="font-mono text-4xl sm:text-5xl font-extrabold text-white tabular-nums">
-                            {regularPrice.toFixed(2)} €
-                          </span>
-                        )}
-                      </div>
-                    </div>
 
-                    {hasPromo && (
-                      <div className="self-start sm:self-center rounded-2xl bg-amber-500/20 border border-amber-500/40 px-3.5 py-1.5 text-right">
-                        <div className="font-bold text-xs text-amber-300">
-                          Économisez {discountAmount} €
-                        </div>
-                        <div className="text-[10px] text-neutral-400">Paiement unique • Sans abonnement</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Encadré Bonus Offert */}
-                  {product.bonus && (
-                    <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-neutral-950 font-bold shadow-md">
-                        <Gift className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-display text-xs font-bold uppercase tracking-wider text-amber-400">
-                            Bonus Spécial Inclus avec votre commande
-                          </span>
-                          <span className="rounded bg-neutral-900 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
-                            Offert
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs font-medium text-neutral-200">
-                          {product.bonus}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ======================================================= */}
-                  {/* GRAND CTA « COMMANDER SUR WHATSAPP »                     */}
-                  {/* ======================================================= */}
-                  <div className="mt-6 flex flex-col gap-2.5">
-                    <button
-                      onClick={handleOrderWhatsApp}
-                      className="group relative flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 px-6 py-4.5 text-base sm:text-lg font-extrabold text-white shadow-xl shadow-emerald-950/60 transition-all transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-                    >
-                      <MessageCircle className="h-6 w-6 stroke-[2.4] fill-white/20 group-hover:scale-110 transition-transform" />
-                      <span>Commander sur WhatsApp</span>
-                      <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </button>
-
-                    <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-400 text-center">
-                      <span className="flex items-center gap-1">
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        Réponse en moins de 5 min
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        Accès & téléchargement immédiats
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Moyens de paiement acceptés */}
-                  <div className="mt-5 border-t border-neutral-800/80 pt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-400">
-                    <span className="font-semibold text-neutral-300">Paiements acceptés :</span>
-                    <span className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-neutral-400">
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">WhatsApp Direct</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Wave</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Orange Money</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Carte Bancaire</span>
-                      <span className="rounded bg-neutral-800 px-2 py-0.5">Virement</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Key Points Summary Teaser */}
-                <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                    <Sparkles className="h-4 w-4" />
-                    <span>Ce que vous allez maîtriser</span>
-                  </div>
-                  <div className="mt-4 space-y-2.5">
-                    {keyPoints.slice(0, 3).map((kp, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-neutral-200">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                        <span className="leading-snug">{kp}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -735,36 +619,7 @@ ${productUrl}`;
                   </div>
                 </div>
 
-                {/* 2. DESCRIPTION COMPLETE */}
-                <div id="description" className="rounded-3xl border border-neutral-800 bg-neutral-900/50 p-6 sm:p-8">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
-                    <BookOpen className="h-4 w-4" />
-                    <span>Présentation Intégrale</span>
-                  </div>
-                  <h2 className="mt-2 font-display text-2xl font-bold text-white">
-                    Description Complète du Livre
-                  </h2>
 
-                  <div className="mt-6 space-y-4 text-sm leading-relaxed text-neutral-300">
-                    {product.full_description ? (
-                      product.full_description.split('\n\n').map((paragraph, idx) => (
-                        <p key={idx}>{paragraph}</p>
-                      ))
-                    ) : (
-                      <>
-                        <p>
-                          {product.short_description || product.summary}
-                        </p>
-                        <p>
-                          Dans un environnement où le temps est votre actif le plus précieux, ce livre audio a été conçu pour délivrer l'essence stratégique des meilleures pratiques en matière de leadership, d'investissement et de développement stratégique.
-                        </p>
-                        <p>
-                          Chaque chapitre a été soigneusement édité pour éliminer le superflu et se concentrer exclusivement sur les leviers d'action à fort impact. Écoutez-le lors de vos déplacements, de vos séances de sport ou lors de vos moments de réflexion pour nourrir votre esprit d'idées novatrices.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
 
                 {/* 3. BONUS SECTION */}
                 {product.bonus && (
@@ -962,55 +817,10 @@ ${productUrl}`;
                     </div>
                   </div>
 
-                  {/* Sidebar WhatsApp Order Button */}
-                  <div className="mt-6 pt-4 border-t border-neutral-800">
-                    <div className="flex items-baseline justify-between mb-3">
-                      <span className="text-xs text-neutral-400">Prix :</span>
-                      <div className="flex items-baseline gap-2">
-                        {hasPromo ? (
-                          <>
-                            <span className="font-mono text-xl font-extrabold text-amber-400">
-                              {currentPrice.toFixed(2)} €
-                            </span>
-                            <span className="font-mono text-xs text-neutral-500 line-through">
-                              {regularPrice.toFixed(2)} €
-                            </span>
-                          </>
-                        ) : (
-                          <span className="font-mono text-xl font-extrabold text-white">
-                            {regularPrice.toFixed(2)} €
-                          </span>
-                        )}
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={handleOrderWhatsApp}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 py-3.5 px-4 text-xs font-bold text-white shadow-lg shadow-emerald-950/40 transition-colors"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span>Commander sur WhatsApp</span>
-                    </button>
-                  </div>
                 </div>
 
-                {/* Assistance card */}
-                <div className="rounded-3xl border border-neutral-800 bg-neutral-900/40 p-6 text-center">
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <h4 className="mt-3 text-xs font-bold text-white">Besoin d'aide ou question ?</h4>
-                  <p className="mt-1 text-[11px] text-neutral-400 leading-relaxed">
-                    Notre équipe VISION BOOKS est à votre écoute directe sur WhatsApp pour répondre à vos questions et vous guider.
-                  </p>
-                  <button
-                    onClick={handleOrderWhatsApp}
-                    className="mt-3 text-xs font-semibold text-amber-400 hover:underline inline-flex items-center gap-1"
-                  >
-                    <span>Poser une question</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
+
               </div>
             </div>
           </div>
@@ -1134,30 +944,6 @@ ${productUrl}`;
           </section>
         )}
       </main>
-
-      {/* ================================================================ */}
-      {/* MOBILE STICKY CTA BAR (Optimized Conversion on Mobile Devices)     */}
-      {/* ================================================================ */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-800 bg-neutral-950/95 p-3 backdrop-blur-md flex items-center justify-between gap-3 shadow-2xl">
-        <div className="flex flex-col">
-          <span className="font-mono text-lg font-extrabold text-amber-400">
-            {currentPrice.toFixed(2)} €
-          </span>
-          {hasPromo && (
-            <span className="font-mono text-[10px] text-neutral-500 line-through">
-              {regularPrice.toFixed(2)} €
-            </span>
-          )}
-        </div>
-
-        <button
-          onClick={handleOrderWhatsApp}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-extrabold text-white shadow-md active:scale-95 transition-transform"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span>Commander sur WhatsApp</span>
-        </button>
-      </div>
 
       <Footer />
       <AudioPreviewModal />

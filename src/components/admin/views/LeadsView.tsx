@@ -66,6 +66,7 @@ export const LeadsView: React.FC = () => {
     leadMagnets,
     showToast,
     settings,
+    products,
   } = useApp();
   const [search, setSearch] = useState('');
   const [leadMagnetFilter, setLeadMagnetFilter] = useState('all');
@@ -87,6 +88,7 @@ export const LeadsView: React.FC = () => {
   const [editDraft, setEditDraft] = useState('');
   const [copiedStep, setCopiedStep] = useState<string | null>(null);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
+  const [selectedFollowupProductId, setSelectedFollowupProductId] = useState('');
 
   // Lead Detail Profile Modal State (Basic info)
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
@@ -154,7 +156,12 @@ export const LeadsView: React.FC = () => {
       return;
     }
 
-    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(messageText.trim())}`;
+    // Repair previously saved J3 messages that still point to the old site domain.
+    const currentOrigin = window.location.origin;
+    const finalMessage = step === 'J3'
+      ? messageText.trim().replace(/https?:\/\/(?:vision-books\.vercel\.app|visionbooks\.audio|vision-books-app\.vercel\.app)/gi, currentOrigin)
+      : messageText.trim();
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(finalMessage)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
 
     // Mark step as 'envoye'
@@ -180,6 +187,14 @@ export const LeadsView: React.FC = () => {
         whatsapp: lead.whatsapp || lead.phone || '',
         lead_magnet_id: lead.lead_magnet_id || null,
         lead_magnet_title: lead.lead_magnet_title || 'Guide offert',
+        lead_magnet_content: (() => {
+          const magnet = leadMagnets.find((item) => item.id === lead.lead_magnet_id);
+          return magnet ? JSON.stringify({ title: magnet.title, topic: magnet.topic, format: magnet.format, description: magnet.description, benefits: magnet.benefits, marketing_content: magnet.marketing_content }) : '';
+        })(),
+        recommended_product: (() => {
+          const product = products.find((item) => item.id === selectedFollowupProductId && item.is_active);
+          return product ? { id: product.id, title: product.title, author: product.author, slug: product.slug, normal_price: product.normal_price, sale_price: product.sale_price, audio_preview_available: Boolean(product.audio_url || product.audioPreviewUrl) } : null;
+        })(),
         step: 'all',
       });
 
@@ -219,6 +234,14 @@ export const LeadsView: React.FC = () => {
         whatsapp: lead.whatsapp || lead.phone || '',
         lead_magnet_id: lead.lead_magnet_id || null,
         lead_magnet_title: lead.lead_magnet_title || 'Guide offert',
+        lead_magnet_content: (() => {
+          const magnet = leadMagnets.find((item) => item.id === lead.lead_magnet_id);
+          return magnet ? JSON.stringify({ title: magnet.title, topic: magnet.topic, format: magnet.format, description: magnet.description, benefits: magnet.benefits, marketing_content: magnet.marketing_content }) : '';
+        })(),
+        recommended_product: (() => {
+          const product = products.find((item) => item.id === selectedFollowupProductId && item.is_active);
+          return product ? { id: product.id, title: product.title, author: product.author, slug: product.slug, normal_price: product.normal_price, sale_price: product.sale_price, audio_preview_available: Boolean(product.audio_url || product.audioPreviewUrl) } : null;
+        })(),
         step,
       });
 
@@ -293,6 +316,12 @@ export const LeadsView: React.FC = () => {
   // Open Sequence Modal on specific tab
   const openSequenceModal = (lead: Lead, stepTab: 'all' | 'J1' | 'J2' | 'J3' = 'all') => {
     setActiveSequenceLead(lead);
+    const magnet = leadMagnets.find((item) => item.id === lead.lead_magnet_id);
+    const terms = `${magnet?.title || lead.lead_magnet_title || ''} ${magnet?.topic || ''}`.toLowerCase().split(/[^a-z0-9à-ÿ]+/).filter((term) => term.length > 3);
+    const activeProducts = products.filter((item) => item.is_active);
+    const matched = activeProducts.find((item) => terms.some((term) => `${item.title} ${item.category} ${item.short_description || ''}`.toLowerCase().includes(term)));
+    const defaultProduct = matched || activeProducts.find((item) => item.is_best_seller || item.isBestSeller) || activeProducts[0];
+    setSelectedFollowupProductId(defaultProduct?.id || '');
     setActiveStepTab(stepTab);
     setEditingStep(null);
   };
@@ -763,8 +792,8 @@ export const LeadsView: React.FC = () => {
           MODAL SÉQUENCE MARKETING IA J1, J2, J3 (INTERFACE DEMANDÉE PAR L'UTILISATEUR)
       ========================================================================= */}
       {activeSequenceLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md overflow-y-auto">
-          <div className="relative my-6 w-full max-w-3xl rounded-2xl sm:rounded-3xl border border-neutral-800 bg-neutral-950 p-5 sm:p-7 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/85 p-2 sm:p-4 backdrop-blur-md overflow-y-auto overscroll-contain">
+          <div className="relative my-2 sm:my-6 w-full max-w-3xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl sm:rounded-3xl border border-neutral-800 bg-neutral-950 p-4 sm:p-7 shadow-2xl space-y-5">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
               <div className="flex items-center gap-3">
@@ -801,6 +830,22 @@ export const LeadsView: React.FC = () => {
               >
                 <X className="h-5 w-5" />
               </button>
+            </div>
+
+            {/* Product to recommend in the final J3 follow-up */}
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-3.5 space-y-2">
+              <label htmlFor="followup-recommended-product" className="block text-xs font-semibold text-neutral-200">Livre à présenter dans la relance J3</label>
+              <select
+                id="followup-recommended-product"
+                value={selectedFollowupProductId}
+                onChange={(e) => setSelectedFollowupProductId(e.target.value)}
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"
+              >
+                {products.filter((item) => item.is_active).map((item) => (
+                  <option key={item.id} value={item.id}>{item.title} — {item.author}</option>
+                ))}
+              </select>
+              <p className="text-[10px] leading-relaxed text-neutral-400">Le message final reprendra le lien réel de cette fiche. Si un extrait audio est disponible, il invitera le prospect à l’écouter sur la fiche produit.</p>
             </div>
 
             {/* Global Controls & Status Bar */}
@@ -1360,7 +1405,7 @@ export const LeadsView: React.FC = () => {
           MODAL FICHE DÉTAILLÉE DU PROSPECT (Consultation)
       ========================================================================= */}
       {detailLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/80 p-2 sm:p-4 backdrop-blur-sm overflow-y-auto overscroll-contain">
           <div className="relative w-full max-w-lg rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-2xl space-y-4">
             <div className="flex items-start justify-between border-b border-neutral-800 pb-3">
               <div className="flex items-center gap-2">

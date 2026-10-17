@@ -186,7 +186,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Les stratégies d\'allocation d\'actifs des 1%'
     ],
     bonus: 'Calculateur Excel dynamique de liberté financière + Template de suivi mensuel de trésorerie.',
-    audio_url: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+    audio_url: '',
     product_url: '/produits/la-voie-de-la-liberte-financiere',
     is_best_seller: true,
     is_active: true,
@@ -507,7 +507,7 @@ export const INITIAL_LEAD_MAGNETS: LeadMagnet[] = [
       'La matrice infaillible d\'élimination de la dette en 90 jours',
       'Fiche mémo et template Excel de suivi de trésorerie inclus'
     ],
-    file_url: '/downloads/guide-liberte-financiere-visionbooks.pdf',
+    file_url: '/downloads/guide-liberte-financiere-visionbooks.txt',
     active: true,
     created_at: '2026-09-20T10:00:00.000Z',
     downloads_count: 1420,
