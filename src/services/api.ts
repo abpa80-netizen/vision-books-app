@@ -218,6 +218,7 @@ export const api = {
     author: string;
     category?: string;
     bonus?: string;
+    hints?: string;
     existing_categories?: Array<{ id: string; name: string; slug: string }>;
   }): Promise<{
     full_description: string;
