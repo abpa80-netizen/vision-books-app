@@ -2,11 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { Category, Product, Testimonial, BlogPost, Lead, LeadMagnet, AdminTab, VipPack } from '../types';
 import {
   INITIAL_CATEGORIES,
-  INITIAL_PRODUCTS,
   INITIAL_TESTIMONIALS,
   INITIAL_BLOG_POSTS,
-  INITIAL_LEADS,
-  INITIAL_LEAD_MAGNETS,
   INITIAL_VIP_PACK,
 } from '../data/initialData';
 import { api } from '../services/api';
@@ -37,7 +34,6 @@ import {
   subscribeVipPack,
   saveVipPackToFirestore,
   deleteVipPackFromFirestore,
-  seedFirestoreIfEmpty,
   migrateLegacyProductAudioUrls,
 } from '../services/firestoreService';
 
@@ -196,13 +192,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // State initialized with robust initial data (no localStorage dependency)
   const [categories, setCategories] = useState<Category[]>(() => sortCategoriesStrategically(INITIAL_CATEGORIES));
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoadingLeads, setIsLoadingLeads] = useState<boolean>(true);
   const [leadsError, setLeadsError] = useState<string | null>(null);
-  const [leadMagnets, setLeadMagnets] = useState<LeadMagnet[]>(INITIAL_LEAD_MAGNETS);
+  const [leadMagnets, setLeadMagnets] = useState<LeadMagnet[]>([]);
   const [activePreviewProduct, setActivePreviewProduct] = useState<Product | null>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [vipPack, setVipPack] = useState<VipPack | null>(INITIAL_VIP_PACK);
@@ -262,21 +258,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // FIRESTORE REAL-TIME SYNCHRONIZATION & PERSISTENCE
   useEffect(() => {
-    // 1. Ensure Firestore is seeded with default documents if empty
+    // Never seed public production data with demo books or demo lead magnets.
+    // Keep the existing private-audio migration, which only acts on existing records.
     if (isAdmin) {
-      seedFirestoreIfEmpty()
-        .catch((err) => {
-          console.warn('Firestore seed check:', err);
-        })
-        .then(async () => {
-          try {
-            const result = await migrateLegacyProductAudioUrls();
-            if (result.migrated > 0) {
-              console.info(`[Firestore] Product privacy migration complete: ${result.migrated} products, ${result.privateUrlsMoved} private URLs moved.`);
-            }
-          } catch (migrationError) {
-            console.error('[Firestore] Product privacy migration did not complete. Publish the updated Firestore rules, then reopen admin.', migrationError);
+      migrateLegacyProductAudioUrls()
+        .then((result) => {
+          if (result.migrated > 0) {
+            console.info(`[Firestore] Product privacy migration complete: ${result.migrated} products, ${result.privateUrlsMoved} private URLs moved.`);
           }
+        })
+        .catch((migrationError) => {
+          console.error('[Firestore] Product privacy migration did not complete. Publish the updated Firestore rules, then reopen admin.', migrationError);
         });
     }
 
