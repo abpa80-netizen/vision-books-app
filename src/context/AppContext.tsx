@@ -37,6 +37,8 @@ import {
   migrateLegacyProductAudioUrls,
 } from '../services/firestoreService';
 
+const publicProducts = (items: Product[]) => items.filter((product) => !/^prod-[1-6]$/.test(product.id));
+
 interface Toast {
   id: string;
   type: 'success' | 'error' | 'info';
@@ -229,7 +231,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCategories(sortCategoriesStrategically(dbCats));
       }
       if (dbProds && Array.isArray(dbProds) && dbProds.length > 0) {
-        setProducts(dbProds);
+        setProducts(publicProducts(dbProds));
       }
       if (dbLms && Array.isArray(dbLms) && dbLms.length > 0) {
         setLeadMagnets(dbLms);
@@ -274,7 +276,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Real-time Firestore Listeners
     const unsubProds = subscribeProducts((items) => {
-      if (items.length > 0) setProducts(items);
+      setProducts(publicProducts(items));
     }, isAdmin);
 
     const unsubCats = subscribeCategories((items) => {
