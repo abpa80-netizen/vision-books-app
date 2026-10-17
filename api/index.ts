@@ -314,6 +314,14 @@ app.post('/api/lead-magnets/generate-ai', async (req: Request, res: Response): P
 
   try {
     const { topic, target_audience, format } = req.body;
+    const siteOrigin = (() => {
+      try {
+        const origin = typeof req.headers.origin === 'string' ? new URL(req.headers.origin).origin : '';
+        return /^https?:\/\//.test(origin) ? origin : 'https://vision-books-app.vercel.app';
+      } catch {
+        return 'https://vision-books-app.vercel.app';
+      }
+    })();
     let resultJson: any = null;
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -613,7 +621,7 @@ Une progression durable commence souvent par des objectifs clairs, des informati
 Étape 3 : Consultez les fiches du catalogue pour connaître le contenu et les tarifs disponibles.
 
 Visitez notre catalogue officiel :
-👉 ${requestOrigin}
+👉 ${siteOrigin}
 
 Pour toute question ou commande assistée sur WhatsApp :
 👉 Utilisez le numéro WhatsApp affiché sur le site pour contacter notre équipe
