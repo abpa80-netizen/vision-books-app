@@ -412,7 +412,7 @@ app.post('/api/leads/generate-sequence', async (req: Request, res: Response): Pr
       url: productUrl,
       price: productPrice,
       audio_preview_available: selectedProduct.audio_preview_available === true,
-    } : { title: 'Catalogue de livres audio', author: 'VISION BOOKS', url: '${requestOrigin}/catalogue', price: 'voir les tarifs sur chaque fiche', audio_preview_available: false };
+    } : { title: 'Catalogue de livres audio', author: 'VISION BOOKS', url: `${requestOrigin}/catalogue`, price: 'voir les tarifs sur chaque fiche', audio_preview_available: false };
 
     let sequence = {
       j1: `Bonjour ${cleanName} ! 🎧 C'est l'équipe VISION BOOKS. Avez-vous pu télécharger et consulter « ${cleanGuide} » ? La clé réside dans l'application immédiate d'un principe fort dès les premières 24h. Je reste à votre disposition si vous souhaitez échanger !`,
@@ -455,7 +455,7 @@ Contenu réel du guide : "${guideContext}"
 Livre sélectionné : ${JSON.stringify(recommendedProduct)}
 Format JSON STRICT : { "j3": "message WhatsApp personnalisé avec URL complète" }`;
         } else {
-          prompt = `Tu es l'expert en relation client de VISION BOOKS (https://vision-books.vercel.app).
+          prompt = `Tu es l'expert en relation client de VISION BOOKS (${requestOrigin}).
 Rédige 3 messages WhatsApp personnalisés pour un prospect ayant téléchargé cette ressource :
 Prénom du prospect : "${cleanName}"
 Guide téléchargé : "${cleanGuide}"
@@ -613,7 +613,7 @@ Une progression durable commence souvent par des objectifs clairs, des informati
 Étape 3 : Consultez les fiches du catalogue pour connaître le contenu et les tarifs disponibles.
 
 Visitez notre catalogue officiel :
-👉 https://vision-books.vercel.app
+👉 ${requestOrigin}
 
 Pour toute question ou commande assistée sur WhatsApp :
 👉 Utilisez le numéro WhatsApp affiché sur le site pour contacter notre équipe
