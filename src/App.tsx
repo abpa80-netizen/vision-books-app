@@ -107,8 +107,8 @@ const MainRouter: React.FC = () => {
       return <CategoryPage slug={cleanSlug} />;
     }
 
-    // Lead Magnet Capture Page: /lead-magnet/[slug] (also accepts /lead-magnets/[slug])
-    const leadMagnetMatch = currentPath.match(/^\/lead-magnets?\/(.+)$/);
+    // Lead Magnet Capture Page: branded /ressource/[slug] plus legacy /lead-magnet/[slug]
+    const leadMagnetMatch = currentPath.match(/^\/(?:lead-magnets?|ressources?)\/(.+)$/);
     if (leadMagnetMatch) {
       const rawSlug = leadMagnetMatch[1].split('?')[0].replace(/\/$/, '');
       const cleanSlug = decodeURIComponent(rawSlug);
