@@ -52,13 +52,13 @@ export const ThankYouPage: React.FC = () => {
     } catch {}
   }, [downloadTriggered]);
 
-  // Automatic countdown redirection to main sales page (homepage)
+  // Return visitors to the real Best-Sellers section after the free resource download.
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigateTo('/');
+          window.location.assign('/#bestsellers');
           return 0;
         }
         return prev - 1;
