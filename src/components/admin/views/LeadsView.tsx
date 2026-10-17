@@ -792,8 +792,8 @@ export const LeadsView: React.FC = () => {
           MODAL SÉQUENCE MARKETING IA J1, J2, J3 (INTERFACE DEMANDÉE PAR L'UTILISATEUR)
       ========================================================================= */}
       {activeSequenceLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md overflow-y-auto">
-          <div className="relative my-6 w-full max-w-3xl rounded-2xl sm:rounded-3xl border border-neutral-800 bg-neutral-950 p-5 sm:p-7 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/85 p-2 sm:p-4 backdrop-blur-md overflow-y-auto overscroll-contain">
+          <div className="relative my-2 sm:my-6 w-full max-w-3xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl sm:rounded-3xl border border-neutral-800 bg-neutral-950 p-4 sm:p-7 shadow-2xl space-y-5">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
               <div className="flex items-center gap-3">
@@ -1405,7 +1405,7 @@ export const LeadsView: React.FC = () => {
           MODAL FICHE DÉTAILLÉE DU PROSPECT (Consultation)
       ========================================================================= */}
       {detailLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/80 p-2 sm:p-4 backdrop-blur-sm overflow-y-auto overscroll-contain">
           <div className="relative w-full max-w-lg rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-2xl space-y-4">
             <div className="flex items-start justify-between border-b border-neutral-800 pb-3">
               <div className="flex items-center gap-2">
